@@ -471,7 +471,7 @@ h1 {
         refreshPlaylistCheck();
         
     }
-    }, 5000); // Check every 30 seconds
+    }, 3000); // Check every 30 seconds
   }
   
   function stopPlaylistRefreshChecker() {
@@ -497,7 +497,7 @@ h1 {
       });
       
       // Wait for playlist to load
-      await wait(2000);
+      await wait(1000);
       
       // Get the updated playlist
       const updatedPlaylist = checkPlayer.getPlaylist();
@@ -517,7 +517,7 @@ h1 {
             // Update playlist
             currentPlaylist = updatedPlaylist;
             updateOverlayInfo();
-            showNotification(`New song.`);
+            showNotification(`new song`);
             
             // Immediately switch to the first new song
             currentPlaylistIndex = oldLength; // Index of first new song
@@ -606,7 +606,7 @@ h1 {
       });
       
       // Wait a bit for the playlist to load
-      await wait(2000);
+      await wait(1000);
       
       // Get the playlist
       const playlist = tempPlayer.getPlaylist();
@@ -684,7 +684,7 @@ h1 {
         try { targetPlayer.setVolume(0); } catch(e){}
         try { targetPlayer.playVideo(); } catch(e){}
         // wait 3 seconds then crossfade
-        setTimeout(() => startCrossfade(), 3000);
+        setTimeout(() => startCrossfade(), 2000);
       }
     }, 350);
   }
@@ -704,7 +704,7 @@ h1 {
     try { if (vol1 > 0) player1.playVideo(); } catch(e){}
     try { if (vol2 > 0) player2.playVideo(); } catch(e){}
 
-    const stepMs = 60;
+    const stepMs = 50;
     fadeInterval = setInterval(() => {
       if (direction) {
         if (vol1 > 0) vol1--;
@@ -792,7 +792,7 @@ h1 {
     function showAndScheduleHide() {
         clearTimeout(placeholderTimeout); 
         inputElement.placeholder = originalPlaceholder;
-        placeholderTimeout = setTimeout(hidePlaceholder, 4000); 
+        placeholderTimeout = setTimeout(hidePlaceholder, 3000); 
     }
 
     showAndScheduleHide();
