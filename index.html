@@ -100,9 +100,9 @@ h1 {
 }
 
   .notification {
-    width: 50px; /* Adjust size as needed */
-    height: 50px; /* Adjust size as needed */
-    background-color: green;
+    width: 10px; /* Adjust size as needed */
+    height: 10px; /* Adjust size as needed */
+    background-color: rgb(119, 255, 104);
     position: fixed;
     top: 30px;
     right: 30px;
@@ -323,9 +323,10 @@ h1 {
   }
 
   function updateOverlayInfo() {
+    const overlayEl = document.querySelector('.overlay-info');
     const modeEl = document.querySelector('.overlay-info .mode');
     const countEl = document.querySelector('.overlay-info .count');
-    
+    overlayEl.style.display = 'block';
     if (playlistMode) {
       modeEl.textContent = '🎵 Playlist Mode';
       countEl.textContent = `Track ${currentPlaylistIndex + 1} of ${currentPlaylist.length}`;
@@ -333,6 +334,9 @@ h1 {
       modeEl.textContent = '🎧 Single Mode';
       countEl.textContent = '';
     }
+    setTimeout(() => {
+              overlayEl.style.display = 'none';      // Hide the square
+          }, 2000); // 2000 milliseconds = 2 seconds
   }
 
   /* ===================== Blinking system ===================== */
@@ -353,7 +357,7 @@ h1 {
           setTimeout(() => {
               square.classList.remove('blinking'); // Stop the animation
               square.style.display = 'none';      // Hide the square
-          }, 3000); // 2000 milliseconds = 2 seconds
+          }, 2000); // 2000 milliseconds = 2 seconds
       }
   }
 
