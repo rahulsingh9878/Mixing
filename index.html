@@ -520,8 +520,8 @@ h1 {
             showNotification(`new song`);
             
             // Immediately switch to the first new song
-            currentPlaylistIndex = oldLength; // Index of first new song
-            const newSongId = currentPlaylist[currentPlaylistIndex];
+            // currentPlaylistIndex = oldLength; // Index of first new song
+            const newSongId = currentPlaylist[oldLength];
             
             console.log(`Switching to new song at index ${currentPlaylistIndex}: ${newSongId}`);
             
