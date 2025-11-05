@@ -100,7 +100,7 @@ h1 {
 }
   
   /* Notification for new songs */
-  .notification {
+  /* .notification {
     position: fixed;
     top: 30px;
     right: 30px;
@@ -138,6 +138,31 @@ h1 {
       transform: translateX(400px);
       opacity: 0;
     }
+  } */
+
+
+  .notification {
+    width: 50px; /* Adjust size as needed */
+    height: 50px; /* Adjust size as needed */
+    background-color: green;
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    z-index: 1000; /* Ensure it's above other content */
+    display: none; /* Hidden by default */
+    border-radius: 50%; /* This makes it a circle */
+  }
+
+  /* Keyframe animation for blinking */
+  @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+  }
+
+  /* Class to apply the blinking animation */
+  .blinking {
+      animation: blink 0.5s infinite; /* 0.5s per cycle, infinite repetitions */
   }
 
   .controls {
@@ -352,24 +377,26 @@ h1 {
     }
   }
 
-  /* ===================== Notification system ===================== */
-  function showNotification(message) {
-    // Remove any existing notification
-    const existing = document.querySelector('.notification');
-    if (existing) {
-      existing.remove();
-    }
-    
-    // Create new notification
-    const notification = document.createElement('div');
-    notification.className = 'notification';
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    // Remove after animation completes
-    setTimeout(() => {
-      notification.remove();
-    }, 3000);
+  /* ===================== Blinking system ===================== */
+  
+  function startBlinkingSquare() {
+      const square = document.createElement('div');
+      notification.className = 'notification';
+      document.body.appendChild(notification);
+
+      // Make sure the square exists
+      if (square) {
+          // Show the square
+          square.style.display = 'block';
+          // Add the blinking class to start the animation
+          square.classList.add('blinking');
+
+          // Set a timeout to stop blinking and hide the square after 2 seconds
+          setTimeout(() => {
+              square.classList.remove('blinking'); // Stop the animation
+              square.style.display = 'none';      // Hide the square
+          }, 3000); // 2000 milliseconds = 2 seconds
+      }
   }
 
   function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
@@ -517,7 +544,7 @@ h1 {
             // Update playlist
             currentPlaylist = updatedPlaylist;
             updateOverlayInfo();
-            showNotification(`new song`);
+            startBlinkingSquare();
             
             // Immediately switch to the first new song
             // currentPlaylistIndex = oldLength; // Index of first new song
