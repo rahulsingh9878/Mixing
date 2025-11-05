@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PMX Video DJ</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Styles (same modern look + background) ---------- */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: 
+      linear-gradient(to bottom, #000000, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    height: 102vh; /* Ensure body takes full viewport height */
+    /* padding: 40px; */
+}
+
+.app {
+  width: 100%; /* Ensure it takes full width on smaller screens */
+  max-width: 2600px; /* Limit size on desktop */
+  margin: 0 auto; /* Center the container horizontally */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+} 
+
+h1 {
+  background: linear-gradient(to right, #777777, #222222); 
+  -webkit-background-clip: text; 
+  background-clip: text;
+  -webkit-text-fill-color: transparent; 
+  color: transparent; 
+  letter-spacing: 7px;
+  text-shadow: 0 0 12px rgba(0,255,229,0.12);
+  font-weight: 700;
+}
+
+/* * 2. .video-container: Fixed for 16:9 Aspect Ratio 
+ * We remove the fixed height and use padding-bottom based on the 16:9 ratio 
+ * (450px / 800px = 0.5625, or 56.25%) to maintain the video's shape on any screen size.
+ */
+.video-container {
+  position: relative;
+  /* Now it takes 100% of the parent (.app) width up to its max-width */
+  width: 100%; 
+  max-width: 2600px; /* Limit the size of the video element on desktop */
+  
+  /* The core responsive trick: remove fixed height and use padding-bottom to maintain aspect ratio */
+  height: 0; 
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio (9 / 16 = 0.5625) */
+
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.03);
+  background: rgba(6,10,20,0.2);
+}
+
+.yt-player {
+  /* This must be absolute to fit exactly into the space created by padding-bottom */
+  position: absolute; 
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.6s cubic-bezier(.2,.9,.2,1);
+  pointer-events: none;
+}
+
+.overlay-info {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 99;
+  background: rgba(0,0,0,0.5);
+  padding: 10px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(6px);
+  color: #cfeff6;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  max-width: 300px;
+}
+
+.overlay-info .mode {
+  font-weight: 700;
+  color: #6effff;
+  margin-bottom: 4px;
+}
+
+.overlay-info .count {
+  font-size: 11px;
+  opacity: 0.8;
+}
+  
+  /* Notification for new songs */
+  .notification {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    background: rgba(0,0,0,0.85);
+    color: #6effff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+    border: 1px solid rgba(110,255,255,0.3);
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1000;
+    animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s;
+    pointer-events: none;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideOut {
+    from {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    to {
+      transform: translateX(400px);
+      opacity: 0;
+    }
+  }
+
+  .controls {
+    width: 100%;
+    display: flex-start;
+    justify-content: left;
+  }
+
+  .input-wrapper {
+    position: relative;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .input-wrapper:focus-within {
+    opacity: 1;
+  }
+
+.input-wrapper::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 3px;
+    background: linear-gradient(90deg, #6effff, #6b8aff);
+    transition: width 0.4s ease;
+    border-radius: 2px;
+}
+
+  .input-wrapper:focus-within::after { width: 100%; }
+
+  form#videoForm { width: 100%; }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 16px 54px 16px 18px;
+    font-size: 16px;
+    color: #e7fbff;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    outline: none;
+    backdrop-filter: blur(6px);
+    box-shadow: none;
+    transition: all 0.3s ease;
+  }
+
+  input::placeholder { 
+    color: rgba(180,220,230,0.55); 
+    transition: color 0.3s ease;
+  }
+
+  input:focus { 
+    background: rgba(255,255,255,0.06); 
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);
+    transform: translateY(-1px); 
+  }
+
+  input:focus::placeholder {
+    color: rgba(180,220,230,0.75);
+  }
+
+  .input-wrapper:focus-within .arrow { transform: translateY(-50%) translateX(6px); opacity: 1; }
+
+
+  @media (max-width: 880px) { .video-container { height: 360px; } .input-wrapper { width: 100%; } }
+  @media (max-width: 520px) { .video-container { height: 240px; } .input-wrapper { width: 100%; } }
+</style>
+</head>
+<body>
+  <div class="app">
+    <h1>PMX</h1>
+
+    <div class="video-container">
+      <!-- Two overlaid YouTube players -->
+      <div id="player1" class="yt-player" style="opacity:1;"></div>
+      <div id="player2" class="yt-player" style="opacity:0;"></div>
+      
+      <!-- Overlay info showing mode -->
+      <div class="overlay-info" id="overlayInfo">
+        <div class="mode">Single Mode</div>
+        <div class="count"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="input-wrapper">
+        <form id="videoForm" autocomplete="off">
+          <input id="videoInput" type="text" placeholder="Video ID or Playlist ID..." />
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- YouTube IFrame API -->
+  <script src="https://www.youtube.com/iframe_api"></script>
+
+  <!-- ---------- Single-file JS: utils, players, UI, crossfade, main ---------- -->
+  <script>
+
+    const elem = document.documentElement; // Request full screen on the entire document
+
+    // Function to request full screen
+    function enterFullscreen() {
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen();
+        } else if (elem.mozRequestFullScreen) { /* Firefox */
+            elem.mozRequestFullScreen();
+        } else if (elem.webkitRequestFullscreen) { /* Safari */
+            elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) { /* IE11 */
+            elem.msRequestFullscreen();
+        }
+    }
+
+    // Function to exit full screen
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) { /* Firefox */
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+
+    // Function to toggle based on current state
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) { // If NOT in full screen
+            enterFullscreen();
+        } else { // If already in full screen
+            exitFullscreen();
+        }
+    }
+
+    // *** NEW KEY LISTENER ***
+    document.addEventListener('keydown', function(event) {
+        // Check if the pressed key is 'f' (case-insensitive, assuming we want the physical 'F' key)
+        if (event.key === 'F' || event.key === 'f') {
+            // Prevent the default browser action for 'F' if one exists, although usually F doesn't have a default.
+            event.preventDefault(); 
+            toggleFullscreen();
+        }
+    });
+
+
+    // Keep the Escape key handler for easy exiting (good practice)
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape" && document.fullscreenElement) {
+            // The browser handles exiting on Escape, but this handler can be useful 
+            // if you want to perform other actions when exiting this way.
+        }
+    });
+
+
+
+  /* ===================== Globals & state ===================== */
+  let player1 = null, player2 = null;
+  let fadeInterval = null;
+  let direction = true; // true: p1 fades OUT -> p2 fades IN ; next click toggles
+
+  const defaultVideo1 = "hXYiAUlQ5Yk";
+  const defaultVideo2 = "3GvjV7I-DEk";
+
+  // Playlist mode variables
+  let playlistMode = false;
+  let currentPlaylist = [];
+  let currentPlaylistIndex = 0;
+  let playlistId = null;
+  let playlistRefreshInterval = null;
+  let hasLoadedNext = false;
+
+  /* ===================== Utils ===================== */
+  function extractVideoID(text) {
+    if (!text) return "";
+    text = text.trim();
+    const reg = /(?:v=|\/embed\/|youtu\.be\/|\/v\/)([0-9A-Za-z_-]{11})/;
+    const m = text.match(reg);
+    if (m && m[1]) return m[1];
+    if (/^[0-9A-Za-z_-]{11}$/.test(text)) return text;
+    return "";
+  }
+
+  function extractPlaylistID(text) {
+    if (!text) return "";
+    text = text.trim();
+    
+    // Check for playlist URL patterns
+    const plMatch = text.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    if (plMatch && plMatch[1]) return plMatch[1];
+    
+    // Check if it's a direct playlist ID (starts with PL, RD, UU, etc.)
+    if (/^(PL|RD|UU|LL|FL|OL)[a-zA-Z0-9_-]+$/.test(text)) return text;
+    
+    return "";
+  }
+
+  function updateOverlayInfo() {
+    const modeEl = document.querySelector('.overlay-info .mode');
+    const countEl = document.querySelector('.overlay-info .count');
+    
+    if (playlistMode) {
+      modeEl.textContent = '🎵 Playlist Mode';
+      countEl.textContent = `Track ${currentPlaylistIndex + 1} of ${currentPlaylist.length}`;
+    } else {
+      modeEl.textContent = '🎧 Single Mode';
+      countEl.textContent = '';
+    }
+  }
+
+  /* ===================== Notification system ===================== */
+  function showNotification(message) {
+    // Remove any existing notification
+    const existing = document.querySelector('.notification');
+    if (existing) {
+      existing.remove();
+    }
+    
+    // Create new notification
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    // Remove after animation completes
+    setTimeout(() => {
+      notification.remove();
+    }, 3000);
+  }
+
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  function ensurePlayerReady(player, attempts = 12, interval = 300) {
+    return new Promise((resolve) => {
+      let tries = 0;
+      const checker = setInterval(() => {
+        tries++;
+        let state = -1;
+        try { state = player.getPlayerState(); } catch(e){}
+        if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING || tries >= attempts) {
+          clearInterval(checker);
+          resolve();
+        }
+      }, interval);
+    });
+  }
+
+  /* ===================== YouTube players setup ===================== */
+  function onYouTubeIframeAPIReady() {
+    player1 = new YT.Player('player1', {
+      videoId: defaultVideo1,
+      playerVars: { autoplay: 1, start: 12, controls: 0, rel: 0, mute: 0, enablejsapi: 1 },
+      events: {
+        'onStateChange': onPlayerStateChange
+      }
+    });
+
+    player2 = new YT.Player('player2', {
+      videoId: defaultVideo2,
+      playerVars: { autoplay: 0, start: 12, controls: 0, rel: 0, enablejsapi: 1 },
+      events: {
+        'onStateChange': onPlayerStateChange
+      }
+    });
+  }
+
+  /* ===================== Time monitoring for playlist ===================== */
+  let playlistCheckInterval = null;
+  
+  function startPlaylistMonitoring() {
+    // Clear any existing interval
+    if (playlistCheckInterval) {
+      clearInterval(playlistCheckInterval);
+    }
+    
+    // Check every 500ms
+    playlistCheckInterval = setInterval(() => {
+      if (!playlistMode || currentPlaylist.length === 0) {
+        clearInterval(playlistCheckInterval);
+        return;
+      }
+      
+      // Get the currently playing player
+      const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+      const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+      
+      try {
+        const currentTime = activePlayer.getCurrentTime();
+        const duration = activePlayer.getDuration();
+        const timeRemaining = duration - currentTime;
+        
+        // When 15 seconds remaining, start loading next track
+        if (timeRemaining <= 30 && timeRemaining > 25) {
+          console.log('30 seconds remaining, loading next track...');
+          loadNextFromPlaylist();
+        }
+      } catch (e) {
+        // Player might not be ready, ignore
+      }
+    }, 500);
+  }
+  
+  function stopPlaylistMonitoring() {
+    if (playlistCheckInterval) {
+      clearInterval(playlistCheckInterval);
+      playlistCheckInterval = null;
+    }
+  }
+
+  /* ===================== Playlist refresh checker ===================== */
+  function startPlaylistRefreshChecker() {
+    // Clear any existing interval
+    if (playlistRefreshInterval) {
+      clearInterval(playlistRefreshInterval);
+    }
+    
+    // Check for new songs every 30 seconds
+    playlistRefreshInterval = setInterval(async () => {
+      if (!playlistMode || !playlistId) {
+        clearInterval(playlistRefreshInterval);
+        return;
+      }
+      
+      console.log('Checking playlist for new songs...');
+      console.log(hasLoadedNext);
+      if (hasLoadedNext==false){
+        refreshPlaylistCheck();
+        
+    }
+    }, 5000); // Check every 30 seconds
+  }
+  
+  function stopPlaylistRefreshChecker() {
+    if (playlistRefreshInterval) {
+      clearInterval(playlistRefreshInterval);
+      playlistRefreshInterval = null;
+    }
+  }
+  
+  async function refreshPlaylistCheck() {
+    if (!playlistMode || !playlistId) return;
+    
+    try {
+      // Use the inactive player to fetch updated playlist
+      const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+      const checkPlayer = p1Opacity > 0.5 ? player2 : player1;
+      
+      // Temporarily load playlist to check
+      checkPlayer.loadPlaylist({
+        listType: 'playlist',
+        list: playlistId,
+        index: 0
+      });
+      
+      // Wait for playlist to load
+      await wait(2000);
+      
+      // Get the updated playlist
+      const updatedPlaylist = checkPlayer.getPlaylist();
+      
+      if (updatedPlaylist && updatedPlaylist.length > 0) {
+        const oldLength = currentPlaylist.length;
+        const newLength = updatedPlaylist.length;
+        
+        if (newLength > oldLength) {
+          console.log(`New songs detected! Old: ${oldLength}, New: ${newLength}`);
+          
+          // Check if the new songs are different from existing ones
+          const newSongs = updatedPlaylist.slice(oldLength);
+          const hasNewUniqueSongs = newSongs.some(songId => !currentPlaylist.includes(songId));
+          
+          if (hasNewUniqueSongs) {
+            // Update playlist
+            currentPlaylist = updatedPlaylist;
+            updateOverlayInfo();
+            showNotification(`${newSongs.length} new song(s) found! Switching now...`);
+            
+            // Immediately switch to the first new song
+            currentPlaylistIndex = oldLength; // Index of first new song
+            const newSongId = currentPlaylist[currentPlaylistIndex];
+            
+            console.log(`Switching to new song at index ${currentPlaylistIndex}: ${newSongId}`);
+            
+            // Reset the hasLoadedNext flag to allow immediate load
+            // hasLoadedNext = false;
+            
+            // Load and crossfade to the new song
+          console.log("1");
+          hasLoadedNext = true;
+          loadIntoInactiveAndCrossfade(newSongId);
+          setTimeout(() => {
+                hasLoadedNext = false;
+                }, 15000);
+
+          } else {
+            // Just update the playlist without switching
+            currentPlaylist = updatedPlaylist;
+            updateOverlayInfo();
+          }
+        }
+      }
+      
+      // Stop the check player
+      try { checkPlayer.stopVideo(); } catch(e){}
+      
+    } catch (error) {
+      console.error('Error refreshing playlist:', error);
+    }
+  }
+
+  /* ===================== Player state change handler ===================== */
+  function onPlayerStateChange(event) {
+    // When video starts playing in playlist mode, start monitoring
+    if (event.data === 1 && playlistMode) {
+      startPlaylistMonitoring();
+    }
+    
+    // Backup: When video ends (state 0) and we're in playlist mode, load next track
+    if (event.data === 0 && playlistMode && currentPlaylist.length > 0) {
+      console.log('Video ended, loading next in playlist...');
+      setTimeout(() => {
+        loadNextFromPlaylist();
+      }, 1000);
+    }
+  }
+
+  /* ===================== Playlist functionality ===================== */
+   // Flag to prevent multiple loads
+  
+  function loadNextFromPlaylist() {
+    if (!playlistMode || currentPlaylist.length === 0 || hasLoadedNext) return;
+    
+    hasLoadedNext = true; // Set flag to prevent duplicate loads
+    
+    currentPlaylistIndex = (currentPlaylistIndex + 1) % currentPlaylist.length;
+    const nextVideoId = currentPlaylist[currentPlaylistIndex];
+    
+    console.log(`Loading track ${currentPlaylistIndex + 1}/${currentPlaylist.length}: ${nextVideoId}`);
+    updateOverlayInfo();
+    loadIntoInactiveAndCrossfade(nextVideoId);
+    
+    // Reset flag after crossfade completes (about 9 seconds: 3s buffer + 6s fade)
+    setTimeout(() => {
+      hasLoadedNext = false;
+    }, 25000);
+  }
+
+  async function loadPlaylistVideos(plId) {
+    console.log('Loading playlist:', plId);
+    playlistMode = true;
+    playlistId = plId;
+    
+    // We'll use a temporary player to get the playlist
+    const tempPlayer = direction ? player2 : player1;
+    
+    try {
+      // Load playlist into the inactive player
+      tempPlayer.loadPlaylist({
+        listType: 'playlist',
+        list: plId,
+        index: 0
+      });
+      
+      // Wait a bit for the playlist to load
+      await wait(2000);
+      
+      // Get the playlist
+      const playlist = tempPlayer.getPlaylist();
+      
+      if (playlist && playlist.length > 0) {
+        currentPlaylist = playlist;
+        currentPlaylistIndex = 0;
+        
+        console.log('Playlist loaded with', currentPlaylist.length, 'videos');
+        updateOverlayInfo();
+        
+        // Stop the temp player
+        try { tempPlayer.stopVideo(); } catch(e){}
+        
+        // Start playlist refresh checker
+        startPlaylistRefreshChecker();
+        
+        // Load the first video
+        loadIntoInactiveAndCrossfade(currentPlaylist[0]);
+      } else {
+        alert('Could not load playlist. Please try again.');
+        playlistMode = false;
+        updateOverlayInfo();
+      }
+    } catch (error) {
+      console.error('Error loading playlist:', error);
+      alert('Error loading playlist. Please check the playlist ID.');
+      playlistMode = false;
+      updateOverlayInfo();
+    }
+  }
+
+  /* ===================== Load video into inactive player ===================== */
+  function loadIntoInactiveAndCrossfade(videoId) {
+    const p1Elem = document.getElementById('player1');
+    const p2Elem = document.getElementById('player2');
+    const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
+    const p2Opacity = parseFloat(window.getComputedStyle(p2Elem).opacity);
+
+    let targetPlayer, targetElem;
+    if (isNaN(p1Opacity) || p1Opacity === 0) {
+      targetPlayer = player1; targetElem = p1Elem;
+    } else if (isNaN(p2Opacity) || p2Opacity === 0) {
+      targetPlayer = player2; targetElem = p2Elem;
+    } else {
+      targetPlayer = player2; targetElem = p2Elem;
+    }
+
+    if (!targetPlayer || typeof targetPlayer.loadVideoById !== 'function') {
+      alert('Player is not ready yet — wait a moment and try again.');
+      return;
+    }
+
+    // reset target
+    try { targetPlayer.pauseVideo(); } catch(e){}
+    try { targetPlayer.setVolume(0); } catch(e){}
+    targetElem.style.opacity = 0;
+
+    // load video at 12s
+    try {
+      targetPlayer.loadVideoById({ videoId: videoId, startSeconds: 12, suggestedQuality: 'large' });
+    } catch (err) {
+      try { targetPlayer.loadVideoById(videoId); } catch(e){}
+    }
+
+    // readiness loop, then play muted and after 3s start crossfade
+    let attempts = 0;
+    console.log("2");
+    const readyCheck = setInterval(() => {
+      attempts++;
+      let state = -1;
+      try { state = targetPlayer.getPlayerState(); } catch(e){}
+      if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING || attempts > 10) {
+        clearInterval(readyCheck);
+        try { targetPlayer.setVolume(0); } catch(e){}
+        try { targetPlayer.playVideo(); } catch(e){}
+        // wait 3 seconds then crossfade
+        setTimeout(() => startCrossfade(), 3000);
+      }
+    }, 350);
+  }
+
+  /* ===================== Crossfade logic ===================== */
+  function startCrossfade() {
+    if (fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+
+    let vol1 = direction ? 100 : 0;
+    let vol2 = direction ? 0 : 100;
+    console.log("3");
+    try { player1.setVolume(vol1); } catch(e){}
+    try { player2.setVolume(vol2); } catch(e){}
+    document.getElementById('player1').style.opacity = (vol1 / 100).toString();
+    document.getElementById('player2').style.opacity = (vol2 / 100).toString();
+
+    try { if (vol1 > 0) player1.playVideo(); } catch(e){}
+    try { if (vol2 > 0) player2.playVideo(); } catch(e){}
+
+    const stepMs = 60;
+    fadeInterval = setInterval(() => {
+      if (direction) {
+        if (vol1 > 0) vol1--;
+        if (vol2 < 100) vol2++;
+      } else {
+        if (vol1 < 100) vol1++;
+        if (vol2 > 0) vol2--;
+      }
+
+      try { player1.setVolume(vol1); } catch(e){}
+      try { player2.setVolume(vol2); } catch(e){}
+      document.getElementById('player1').style.opacity = (vol1 / 100).toString();
+      document.getElementById('player2').style.opacity = (vol2 / 100).toString();
+
+      if (vol1 === 0) { try { player1.pauseVideo(); } catch(e){} }
+      if (vol2 === 0) { try { player2.pauseVideo(); } catch(e){} }
+
+      if ((direction && vol1 === 0 && vol2 === 100) || (!direction && vol1 === 100 && vol2 === 0)) {
+        clearInterval(fadeInterval);
+        fadeInterval = null;
+        direction = !direction;
+      }
+    }, stepMs);
+  }
+
+  /* ===================== UI wiring: Enter submit and clearing ===================== */
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('videoForm');
+    const input = document.getElementById('videoInput');
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const raw = input.value;
+        
+        // First check if it's a playlist
+        const plId = extractPlaylistID(raw);
+        if (plId) {
+            console.log('Detected playlist:', plId);
+            input.value = '';
+            input.blur();
+            loadPlaylistVideos(plId);
+            return;
+        }
+        
+        // Otherwise treat as video ID
+        const videoId = extractVideoID(raw);
+        if (!videoId) { 
+            alert('Please paste a valid YouTube video ID, URL, or Playlist ID.'); 
+            return; 
+        }
+
+        // Switch to single mode if we were in playlist mode
+        if (playlistMode) {
+            playlistMode = false;
+            currentPlaylist = [];
+            currentPlaylistIndex = 0;
+            hasLoadedNext = false;
+            stopPlaylistMonitoring();
+            stopPlaylistRefreshChecker();
+            updateOverlayInfo();
+        }
+
+        input.value = '';
+        input.blur(); 
+        
+        loadIntoInactiveAndCrossfade(videoId);
+    });
+
+    document.body.addEventListener('click', () => input.focus());
+    
+    // Initialize overlay
+    updateOverlayInfo();
+  });
+
+  
+  document.addEventListener('DOMContentLoaded', () => {
+    const inputElement = document.getElementById('videoInput');
+    const originalPlaceholder = 'Video ID or Playlist ID...';
+    let placeholderTimeout;
+
+    function hidePlaceholder() {
+        inputElement.placeholder = '';
+    }
+
+    function showAndScheduleHide() {
+        clearTimeout(placeholderTimeout); 
+        inputElement.placeholder = originalPlaceholder;
+        placeholderTimeout = setTimeout(hidePlaceholder, 4000); 
+    }
+
+    showAndScheduleHide();
+
+    inputElement.addEventListener('focus', () => {
+        clearTimeout(placeholderTimeout);
+        hidePlaceholder(); 
+    });
+
+    inputElement.addEventListener('blur', () => {
+        if (inputElement.value.trim() === '') {
+            showAndScheduleHide();
+        } else {
+            hidePlaceholder(); 
+        }
+    });
+
+    inputElement.addEventListener('input', () => {
+        clearTimeout(placeholderTimeout);
+    });
+  });
+  </script>
+</body>
+</html>
