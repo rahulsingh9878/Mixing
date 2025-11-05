@@ -28,7 +28,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 5px;
 } 
 
 h1 {
@@ -99,17 +99,17 @@ h1 {
   opacity: 0.8;
 }
 
-  .notification {
-    width: 10px; /* Adjust size as needed */
-    height: 10px; /* Adjust size as needed */
-    background-color: rgb(119, 255, 104);
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    z-index: 1000; /* Ensure it's above other content */
-    display: none; /* Hidden by default */
-    border-radius: 50%; /* This makes it a circle */
-  }
+.notification {
+  width: 5px; /* Adjust size as needed */
+  height: 5px; /* Adjust size as needed */
+  background-color: rgb(119, 255, 104);
+  position: fixed;
+  top: 30px;
+  right: 30px;
+  z-index: 1000; /* Ensure it's above other content */
+  display: none; /* Hidden by default */
+  border-radius: 50%; /* This makes it a circle */
+}
 
   /* Keyframe animation for blinking */
   @keyframes blink {
@@ -120,7 +120,7 @@ h1 {
 
   /* Class to apply the blinking animation */
   .blinking {
-      animation: blink 0.5s infinite; /* 0.5s per cycle, infinite repetitions */
+      animation: blink 1s infinite; /* 0.5s per cycle, infinite repetitions */
   }
 
   .controls {
@@ -130,7 +130,11 @@ h1 {
   }
 
   .input-wrapper {
-    position: relative;
+    position: absolute;
+    left: 0px;
+    bottom: 0px;
+    z-index: 99;
+    /* position: relative; */
     opacity: 0;
     transition: opacity 0.3s ease;
   }
@@ -206,13 +210,13 @@ h1 {
         <div class="mode">Single Mode</div>
         <div class="count"></div>
       </div>
-    </div>
 
-    <div class="controls">
-      <div class="input-wrapper">
-        <form id="videoForm" autocomplete="off">
-          <input id="videoInput" type="text" placeholder="Video ID or Playlist ID..." />
-        </form>
+      <div class="controls">
+        <div class="input-wrapper">
+          <form id="videoForm" autocomplete="off">
+            <input id="videoInput" type="text" placeholder="Video ID or Playlist ID..." />
+          </form>
+        </div>
       </div>
     </div>
   </div>
