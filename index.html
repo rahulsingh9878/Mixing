@@ -471,7 +471,7 @@ h1 {
         refreshPlaylistCheck();
         
     }
-    }, 3000); // Check every 30 seconds
+    }, 2000); // Check every 30 seconds
   }
   
   function stopPlaylistRefreshChecker() {
@@ -684,7 +684,7 @@ h1 {
         try { targetPlayer.setVolume(0); } catch(e){}
         try { targetPlayer.playVideo(); } catch(e){}
         // wait 3 seconds then crossfade
-        setTimeout(() => startCrossfade(), 2000);
+        setTimeout(() => startCrossfade(), 1000);
       }
     }, 350);
   }
