@@ -18,7 +18,6 @@ body {
     justify-content: center;
     color: #fff;
     height: 102vh; /* Ensure body takes full viewport height */
-    /* padding: 40px; */
 }
 
 .app {
@@ -32,7 +31,7 @@ body {
 } 
 
 h1 {
-  background: linear-gradient(to right, #777777, #222222); 
+  background: linear-gradient(to right, #c7c3c3, #3c3333); 
   -webkit-background-clip: text; 
   background-clip: text;
   -webkit-text-fill-color: transparent; 
@@ -185,14 +184,8 @@ h1 {
     transform: translateY(-1px); 
   }
 
-  input:focus::placeholder {
-    color: rgba(180,220,230,0.75);
-  }
-
-  .input-wrapper:focus-within .arrow { transform: translateY(-50%) translateX(6px); opacity: 1; }
-
-
-  @media (max-width: 880px) { .video-container { height: 360px; } .input-wrapper { width: 100%; } }
+  @media (max-width: 2000px) { .video-container { height: 520px; } .input-wrapper { width: 100%; } }
+  @media (max-width: 1000px) { .video-container { height: 360px; } .input-wrapper { width: 100%; } }
   @media (max-width: 520px) { .video-container { height: 240px; } .input-wrapper { width: 100%; } }
 </style>
 </head>
@@ -464,7 +457,7 @@ h1 {
         refreshPlaylistCheck();
         
     }
-    }, 2000); // Check every 30 seconds
+    }, 2000); // Check every 2 seconds
   }
   
   function stopPlaylistRefreshChecker() {
@@ -579,7 +572,7 @@ h1 {
     // Reset flag after crossfade completes (about 9 seconds: 3s buffer + 6s fade)
     setTimeout(() => {
       hasLoadedNext = false;
-    }, 25000);
+    }, 15000);
   }
 
   async function loadPlaylistVideos(plId) {
@@ -774,39 +767,56 @@ h1 {
 
   
   document.addEventListener('DOMContentLoaded', () => {
+    const inputWrapper = document.querySelector('.input-wrapper');
     const inputElement = document.getElementById('videoInput');
-    const originalPlaceholder = 'Video ID or Playlist ID...';
-    let placeholderTimeout;
+    let typingTimer; // Timer for hiding after no typing
+    const hideAfterTypingDelay = 2000; // 2 seconds
 
-    function hidePlaceholder() {
-        inputElement.placeholder = '';
+    // Function to hide the input wrapper (by setting its opacity to 0)
+    function hideInputWrapper() {
+        if (!inputElement.value.trim()) { // Only hide if the input is empty
+             inputWrapper.style.opacity = '0';
+             // Optional: blur the input if it's still focused, so it also loses focus styling
+             if (document.activeElement === inputElement) {
+                 inputElement.blur();
+             }
+        }
     }
 
-    function showAndScheduleHide() {
-        clearTimeout(placeholderTimeout); 
-        inputElement.placeholder = originalPlaceholder;
-        placeholderTimeout = setTimeout(hidePlaceholder, 3000); 
+    // Function to show the input wrapper (by setting its opacity to 1)
+    function showInputWrapper() {
+        inputWrapper.style.opacity = '1';
     }
 
-    showAndScheduleHide();
-
+    // --- Event Listeners ---
+    // When the input receives focus
     inputElement.addEventListener('focus', () => {
-        clearTimeout(placeholderTimeout);
-        hidePlaceholder(); 
+        showInputWrapper(); // Ensure it's visible on focus
+        clearTimeout(typingTimer); // Clear any pending hide timer
+        typingTimer = setTimeout(hideInputWrapper, hideAfterTypingDelay);
     });
 
+    // When the input loses focus (blurs)
     inputElement.addEventListener('blur', () => {
+        // If the input is empty, hide it immediately or after a short delay
         if (inputElement.value.trim() === '') {
-            showAndScheduleHide();
-        } else {
-            hidePlaceholder(); 
+            // Give a tiny delay in case focus is moving to another related element
+            setTimeout(hideInputWrapper, 100);
         }
     });
 
+    // When the user types in the input
     inputElement.addEventListener('input', () => {
-        clearTimeout(placeholderTimeout);
+        showInputWrapper(); // Ensure it's visible while typing
+        clearTimeout(typingTimer); // Reset the hide timer every time they type
+        typingTimer = setTimeout(hideInputWrapper, hideAfterTypingDelay); // Start a new timer
     });
-  });
+
+    if (inputElement.value.trim() !== '') {
+        showInputWrapper();
+    }
+});
+  
   </script>
 </body>
 </html>
