@@ -98,48 +98,6 @@ h1 {
   font-size: 11px;
   opacity: 0.8;
 }
-  
-  /* Notification for new songs */
-  /* .notification {
-    position: fixed;
-    top: 30px;
-    right: 30px;
-    background: rgba(0,0,0,0.85);
-    color: #6effff;
-    padding: 15px 20px;
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-    border: 1px solid rgba(110,255,255,0.3);
-    font-size: 14px;
-    font-weight: 600;
-    z-index: 1000;
-    animation: slideIn 0.3s ease, slideOut 0.3s ease 2.7s;
-    pointer-events: none;
-  }
-
-  @keyframes slideIn {
-    from {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-
-  @keyframes slideOut {
-    from {
-      transform: translateX(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-  } */
-
 
   .notification {
     width: 50px; /* Adjust size as needed */
@@ -381,8 +339,8 @@ h1 {
   
   function startBlinkingSquare() {
       const square = document.createElement('div');
-      notification.className = 'notification';
-      document.body.appendChild(notification);
+      square.className = 'notification';
+      document.body.appendChild(square);
 
       // Make sure the square exists
       if (square) {
