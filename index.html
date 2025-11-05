@@ -303,8 +303,8 @@ h1 {
   let fadeInterval = null;
   let direction = true; // true: p1 fades OUT -> p2 fades IN ; next click toggles
 
-  const defaultVideo1 = "hXYiAUlQ5Yk";
-  const defaultVideo2 = "3GvjV7I-DEk";
+  const defaultVideo1 = "8SYPKQMW_2Q";
+  const defaultVideo2 = "p2EdDiiVHh4";
 
   // Playlist mode variables
   let playlistMode = false;
@@ -517,7 +517,7 @@ h1 {
             // Update playlist
             currentPlaylist = updatedPlaylist;
             updateOverlayInfo();
-            showNotification(`${newSongs.length} new song(s) found! Switching now...`);
+            showNotification(`New song.`);
             
             // Immediately switch to the first new song
             currentPlaylistIndex = oldLength; // Index of first new song
