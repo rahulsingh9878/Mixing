@@ -690,7 +690,7 @@ h1 {
     try { if (vol1 > 0) player1.playVideo(); } catch(e){}
     try { if (vol2 > 0) player2.playVideo(); } catch(e){}
 
-    const stepMs = 50;
+    const stepMs = 25;
     fadeInterval = setInterval(() => {
       if (direction) {
         if (vol1 > 0) vol1--;
