@@ -825,6 +825,7 @@ h1 {
   /**
   * Calls your specific 'nextsong' API and logs the extracted details.
   */
+  let nextSong = "";
   async function getNextSong() {
     
     const apiUrl = "https://pythondj.onrender.com/nextsong/";
@@ -870,7 +871,7 @@ h1 {
   }
 
   getNextSong();
-  const songInterval = setInterval(getNextSong, 10000);
+  const songInterval = setInterval(getNextSong, 5000);
 
     
   </script>
