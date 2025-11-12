@@ -657,7 +657,7 @@ h1 {
 
     // load video at 12s
     try {
-      targetPlayer.loadVideoById({ videoId: videoId, startSeconds: 12, suggestedQuality: 'large' });
+      targetPlayer.loadVideoById({videoId: videoId, startSeconds: startSeconds, suggestedQuality: 'large' });
     } catch (err) {
       try { targetPlayer.loadVideoById(videoId); } catch(e){}
     }
@@ -851,6 +851,8 @@ h1 {
       console.log("  Title:", title);
       console.log("  Video ID:", videoId);
       console.log("  Timestamp:", timestamp);
+      console.log("  nextSong:", nextSong);
+      console.log("  hasLoadedNext:", hasLoadedNext);
       
       if (nextSong != videoId && hasLoadedNext == false){
           hasLoadedNext = true;
