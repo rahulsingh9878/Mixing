@@ -855,7 +855,8 @@ h1 {
       console.log("  hasLoadedNext:", hasLoadedNext);
       
       if (nextSong != videoId && hasLoadedNext == false){
-          hasLoadedNext = true;
+        hasLoadedNext = true;
+        console.log("  Calling:", "True");
           nextSong = videoId;
           if (timestamp > 4){
               timestamp -= 4;
