@@ -293,7 +293,7 @@ h1 {
   let playlistId = null;
   let playlistRefreshInterval = null;
   let hasLoadedNext = false;
-  let nextSong = "";
+  let nextSong = "p2EdDiiVHh4";
 
   /* ===================== Utils ===================== */
   function extractVideoID(text) {
@@ -852,13 +852,13 @@ h1 {
       console.log("  Video ID:", videoId);
       console.log("  Timestamp:", timestamp);
       
-      if (newSong != videoId && hasLoadedNext == false){
+      if (nextSong != videoId && hasLoadedNext == false){
           hasLoadedNext = true;
-          newSong = videoId;
+          nextSong = videoId;
           if (timestamp > 4){
               timestamp -= 4;
           }
-          loadIntoInactiveAndCrossfade(newSong, timestamp-4);
+          loadIntoInactiveAndCrossfade(nextSong, timestamp-4);
           setTimeout(() => {
                     hasLoadedNext = false;
           }, 15000);
