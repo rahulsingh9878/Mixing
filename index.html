@@ -569,7 +569,7 @@ h1 {
     
     console.log(`Loading track ${currentPlaylistIndex + 1}/${currentPlaylist.length}: ${nextVideoId}`);
     updateOverlayInfo();
-    newSongId = nextVideoId
+    newSong = nextVideoId
     loadIntoInactiveAndCrossfade(nextVideoId);
     
     // Reset flag after crossfade completes (about 9 seconds: 3s buffer + 6s fade)
@@ -614,7 +614,7 @@ h1 {
         startPlaylistRefreshChecker();
         
         // Load the first video
-        newSongId = currentPlaylist[0]
+        newSong = currentPlaylist[0]
         loadIntoInactiveAndCrossfade(currentPlaylist[0]);
       } else {
         alert('Could not load playlist. Please try again.');
@@ -630,8 +630,7 @@ h1 {
   }
 
   /* ===================== Load video into inactive player ===================== */
-  function loadIntoInactiveAndCrossfade(videoId) {
-    newSongId = videoId 
+  function loadIntoInactiveAndCrossfade(videoId, startSeconds=12) {
     const p1Elem = document.getElementById('player1');
     const p2Elem = document.getElementById('player2');
     const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
@@ -848,29 +847,31 @@ h1 {
       const timestamp = songData.timestamp;
 
       // Log the extracted values
-      console.log("--- New Song Details ---");
+
       console.log("  Title:", title);
       console.log("  Video ID:", videoId);
       console.log("  Timestamp:", timestamp);
-      console.log("------------------------");
+      
+      if (newSong != videoId && hasLoadedNext == false){
+          hasLoadedNext = true;
+          newSong = videoId;
+          if (timestamp > 4){
+              timestamp -= 4;
+          }
+          loadIntoInactiveAndCrossfade(newSong, timestamp-4);
+          setTimeout(() => {
+                    hasLoadedNext = false;
+          }, 15000);
+        }
 
     } catch (error) {
       console.error("Error fetching or parsing API:", error);
     }
   }
 
-
-  // --- HERE IS THE SOLUTION ---
-
-  // 1. Run the function immediately on load
   getNextSong();
+  const songInterval = setInterval(getNextSong, 10000);
 
-  // 2. Then, set it to run EVERY 3 seconds (3000 milliseconds)
-  // We save the ID it returns so we can stop it.
-  const songInterval = setInterval(getNextSong, 3000);
-
-  console.log("Started polling for new songs every 3 seconds.");
-  console.log("To stop this, type 'clearInterval(songInterval)' in the console.");
     
   </script>
 </body>
