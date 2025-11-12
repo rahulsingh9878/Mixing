@@ -293,6 +293,7 @@ h1 {
   let playlistId = null;
   let playlistRefreshInterval = null;
   let hasLoadedNext = false;
+  let nextSong = "";
 
   /* ===================== Utils ===================== */
   function extractVideoID(text) {
@@ -517,6 +518,7 @@ h1 {
             // Load and crossfade to the new song
           console.log("1");
           hasLoadedNext = true;
+          nextSong = newSongId
           loadIntoInactiveAndCrossfade(newSongId);
           setTimeout(() => {
                 hasLoadedNext = false;
@@ -567,6 +569,7 @@ h1 {
     
     console.log(`Loading track ${currentPlaylistIndex + 1}/${currentPlaylist.length}: ${nextVideoId}`);
     updateOverlayInfo();
+    newSongId = nextVideoId
     loadIntoInactiveAndCrossfade(nextVideoId);
     
     // Reset flag after crossfade completes (about 9 seconds: 3s buffer + 6s fade)
@@ -611,6 +614,7 @@ h1 {
         startPlaylistRefreshChecker();
         
         // Load the first video
+        newSongId = currentPlaylist[0]
         loadIntoInactiveAndCrossfade(currentPlaylist[0]);
       } else {
         alert('Could not load playlist. Please try again.');
@@ -627,6 +631,7 @@ h1 {
 
   /* ===================== Load video into inactive player ===================== */
   function loadIntoInactiveAndCrossfade(videoId) {
+    newSongId = videoId 
     const p1Elem = document.getElementById('player1');
     const p2Elem = document.getElementById('player2');
     const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
@@ -816,7 +821,57 @@ h1 {
         showInputWrapper();
     }
 });
-  
+
+
+  /**
+  * Calls your specific 'nextsong' API and logs the extracted details.
+  */
+  async function getNextSong() {
+    
+    const apiUrl = "https://pythondj.onrender.com/nextsong/";
+    
+    // A small log to show it's running
+    console.log("Fetching new song..."); 
+
+    try {
+      const response = await fetch(apiUrl);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const fullResponse = await response.json();
+      const songData = fullResponse.data;
+      
+      // Extract the details
+      const title = songData.title;
+      const videoId = songData.videoId;
+      const timestamp = songData.timestamp;
+
+      // Log the extracted values
+      console.log("--- New Song Details ---");
+      console.log("  Title:", title);
+      console.log("  Video ID:", videoId);
+      console.log("  Timestamp:", timestamp);
+      console.log("------------------------");
+
+    } catch (error) {
+      console.error("Error fetching or parsing API:", error);
+    }
+  }
+
+
+  // --- HERE IS THE SOLUTION ---
+
+  // 1. Run the function immediately on load
+  getNextSong();
+
+  // 2. Then, set it to run EVERY 3 seconds (3000 milliseconds)
+  // We save the ID it returns so we can stop it.
+  const songInterval = setInterval(getNextSong, 3000);
+
+  console.log("Started polling for new songs every 3 seconds.");
+  console.log("To stop this, type 'clearInterval(songInterval)' in the console.");
+    
   </script>
 </body>
 </html>
