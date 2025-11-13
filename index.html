@@ -827,11 +827,7 @@ h1 {
   * Calls your specific 'nextsong' API and logs the extracted details.
   */
 
-// let apiUrl = "https://pythondj.onrender.com/nextsong/";
-
-let apiUrl = "https://0.0.0.0:5500/nextsong/";
-
-  async function getNextSong() {
+async function getNextSong(data) {
     
     // const apiUrl = "https://pythondj.onrender.com/nextsong/";
     
@@ -839,29 +835,10 @@ let apiUrl = "https://0.0.0.0:5500/nextsong/";
     console.log("Fetching new song..."); 
 
     try {
-      const response = await fetch(apiUrl, {
-  headers: {
-    // Add this line to skip the ngrok warning page
-    'ngrok-skip-browser-warning': 'true' 
-  }
-});
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const fullResponse = await response.json();
-      const songData = fullResponse.data;
-      
-      // Extract the details
-      const title = songData.title;
-      const videoId = songData.videoId;
-      let timestamp = songData.timestamp;
-
       // Log the extracted values
-
-      console.log("  Title:", title);
-      console.log("  Video ID:", videoId);
-      console.log("  Timestamp:", timestamp);
+      console.log("  Title:", data.title);
+      console.log("  Video ID:", data.videoId);
+      console.log("  Timestamp:", data.timestamp);
       console.log("  nextSong:", nextSong);
       console.log("  hasLoadedNext:", hasLoadedNext);
       
@@ -883,8 +860,30 @@ let apiUrl = "https://0.0.0.0:5500/nextsong/";
     }
   }
 
-  getNextSong();
-  const songInterval = setInterval(getNextSong, 5000);
+let wsuri = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/ws/"
+const ws = new WebSocket(wsuri);
+ws.onopen = () => console.log("WS open");
+ws.onmessage = (ev) => {
+  // server sends JSON like {"video_id": "abc123"}
+  const data = JSON.parse(ev.data);
+  getNextSong(data);
+  
+  // do something e.g. play the video_id
+};
+ws.onclose = () => console.log("WS closed");
+
+function palythis(){
+  const ws = new WebSocket(wsuri);
+  ws.onopen = () => console.log("WS open");
+  ws.onmessage = (ev) => {
+    // server sends JSON like {"video_id": "abc123"}
+    const data = JSON.parse(ev.data);
+    getNextSong(data);
+    
+    // do something e.g. play the video_id
+  };
+  ws.onclose = () => console.log("WS closed");
+}
 
     
   </script>
