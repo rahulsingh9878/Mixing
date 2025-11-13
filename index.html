@@ -668,15 +668,16 @@ h1 {
     const readyCheck = setInterval(() => {
       attempts++;
       let state = -1;
+      console.log(attempts);
       try { state = targetPlayer.getPlayerState(); } catch(e){}
-      if (state === YT.PlayerState.PLAYING || state === YT.PlayerState.BUFFERING || attempts > 10) {
+      if (state === YT.PlayerState.PLAYING || attempts > 20) {
         clearInterval(readyCheck);
         try { targetPlayer.setVolume(0); } catch(e){}
         try { targetPlayer.playVideo(); } catch(e){}
         // wait 3 seconds then crossfade
         setTimeout(() => startCrossfade(), 1000);
       }
-    }, 350);
+    }, 400);
   }
 
   /* ===================== Crossfade logic ===================== */
