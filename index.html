@@ -841,7 +841,8 @@ async function getNextSong(data) {
       console.log("  Timestamp:", data.timestamp);
       console.log("  nextSong:", nextSong);
       console.log("  hasLoadedNext:", hasLoadedNext);
-      videoId = data.videoId
+      videoId = data.videoId;
+      timestamp = data.timestamp;
       if (nextSong != videoId && hasLoadedNext == false){
         hasLoadedNext = true;
         console.log("  Calling:", "True");
