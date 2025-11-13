@@ -838,7 +838,12 @@ let apiUrl = "https://0.0.0.0:5500/nextsong/";
     console.log("Fetching new song..."); 
 
     try {
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, {
+  headers: {
+    // Add this line to skip the ngrok warning page
+    'ngrok-skip-browser-warning': 'true' 
+  }
+});
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
