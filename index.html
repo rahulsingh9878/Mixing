@@ -698,7 +698,7 @@ h1 {
 
     const totalFadeTime = 3000;
     const stepMs = totalFadeTime / maxVol;
-    const volStep = maxVol / 100;
+    const volStep = Number((maxVol / 100).toFixed(2));
 
     fadeInterval = setInterval(() => {
       if (direction) {
@@ -708,7 +708,7 @@ h1 {
         if (vol1 < maxVol) vol1+=volStep;
         if (vol2 > 0) vol2-=volStep;
       }
-      console.log("Vol1:-", vol1, "Vol2:-", vol2);
+      console.log("Vol1:-", vol1, "Vol2:-", vol2, "maxVol:-", maxVol, "volStep:-", volStep);
       try { player1.setVolume(Math.round(vol1)); } catch(e){}
       try { player2.setVolume(Math.round(vol2)); } catch(e){}
       document.getElementById('player1').style.opacity = (vol1 / maxVol).toString();
@@ -717,7 +717,7 @@ h1 {
       if (vol1 === 0) { try { player1.pauseVideo(); } catch(e){} }
       if (vol2 === 0) { try { player2.pauseVideo(); } catch(e){} }
 
-      if ((direction && vol1 === 0 && vol2 === maxVol) || (!direction && vol1 === maxVol && vol2 === 0)) {
+      if ((direction && vol1 <= 0 && vol2 >= maxVol) || (!direction && vol1 >= maxVol && vol2 <= 0)) {
         clearInterval(fadeInterval);
         fadeInterval = null;
         direction = !direction;
