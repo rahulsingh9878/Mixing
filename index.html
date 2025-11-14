@@ -902,7 +902,7 @@ volumeWs.onmessage = (ev) => {
   // server sends JSON like {"volume": "50"}
   const data = JSON.parse(ev.data);
   const vol = parseInt(data.volume);
-  console.log("Received volume:", vol);
+  // console.log("Received volume:", vol);
   changeVol(vol);
 };
 volumeWs.onclose = () => {
