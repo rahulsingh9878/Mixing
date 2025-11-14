@@ -698,7 +698,7 @@ h1 {
 
     const totalFadeTime = 5000;
     const stepMs = totalFadeTime / maxVol;
-    const volStep = Number((maxVol / stepMs).toFixed(1));
+    const volStep = Number((maxVol / 100).toFixed(1));
     const startTimeMs = new Date().getTime();
     console.log(`Start Time (ms): ${startTimeMs}`);
 
