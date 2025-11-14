@@ -708,7 +708,7 @@ h1 {
         if (vol1 < maxVol) vol1 = Number((vol1+volStep).toFixed(2));
         if (vol2 > 0) vol2 = Number((vol2-volStep).toFixed(2));
       }
-      console.log("Vol1:-", vol1, "Vol2:-", vol2, "maxVol:-", maxVol, "volStep:-", volStep);
+      console.log("Vol1:-", vol1, vol2, "maxVol:-", maxVol, "volStep:-", volStep, "stepMs:-", stepMs);
       try { player1.setVolume(Math.round(vol1)); } catch(e){}
       try { player2.setVolume(Math.round(vol2)); } catch(e){}
       document.getElementById('player1').style.opacity = (vol1 / maxVol).toString();
