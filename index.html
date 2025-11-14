@@ -665,11 +665,11 @@ h1 {
 
     // readiness loop, then play muted and after 3s start crossfade
     let attempts = 0;
-    console.log("2");
+    console.log("Playing...");
     const readyCheck = setInterval(() => {
       attempts++;
       let state = -1;
-      console.log(attempts);
+      if (attempts > 3) console.log(attempts);
       try { state = targetPlayer.getPlayerState(); } catch(e){}
       if (state === YT.PlayerState.PLAYING || attempts > 20) {
         clearInterval(readyCheck);
@@ -710,7 +710,7 @@ h1 {
         if (vol1 < maxVol) vol1 = Number((vol1+volStep).toFixed(2));
         if (vol2 > 0) vol2 = Number((vol2-volStep).toFixed(2));
       }
-      console.log("Vol1:-", vol1, vol2, "maxVol:-", maxVol, "volStep:-", volStep, "stepMs:-", stepMs);
+      // console.log("Vol1:-", vol1, vol2, "maxVol:-", maxVol, "volStep:-", volStep, "stepMs:-", stepMs);
       try { player1.setVolume(Math.round(vol1)); } catch(e){}
       try { player2.setVolume(Math.round(vol2)); } catch(e){}
       document.getElementById('player1').style.opacity = (vol1 / maxVol).toString();
