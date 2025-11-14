@@ -696,18 +696,20 @@ h1 {
     try { if (vol1 > 0) player1.playVideo(); } catch(e){}
     try { if (vol2 > 0) player2.playVideo(); } catch(e){}
 
-    const stepMs = maxVol/4;
+    const totalFadeTime = 2000;
+    const stepMs = totalFadeTime / maxVol;
+    const volStep = maxVol / 100;
     fadeInterval = setInterval(() => {
       if (direction) {
-        if (vol1 > 0) vol1--;
-        if (vol2 < maxVol) vol2++;
+        if (vol1 > 0) vol1-=volStep;
+        if (vol2 < maxVol) vol2+=volStep;
       } else {
-        if (vol1 < maxVol) vol1++;
-        if (vol2 > 0) vol2--;
+        if (vol1 < maxVol) vol1+=volStep;
+        if (vol2 > 0) vol2-=volStep;
       }
 
-      try { player1.setVolume(vol1); } catch(e){}
-      try { player2.setVolume(vol2); } catch(e){}
+      try { player1.setVolume(Math.round(vol1)); } catch(e){}
+      try { player2.setVolume(Math.round(vol2)); } catch(e){}
       document.getElementById('player1').style.opacity = (vol1 / maxVol).toString();
       document.getElementById('player2').style.opacity = (vol2 / maxVol).toString();
 
