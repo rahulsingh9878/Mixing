@@ -699,6 +699,8 @@ h1 {
     const totalFadeTime = 3000;
     const stepMs = totalFadeTime / maxVol;
     const volStep = Number((maxVol / 100).toFixed(2));
+    const startTimeMs = new Date().getTime();
+    console.log(`Start Time (ms): ${startTimeMs}`);
 
     fadeInterval = setInterval(() => {
       if (direction) {
@@ -722,6 +724,13 @@ h1 {
         fadeInterval = null;
         direction = !direction;
         console.log("Faderue", direction, );
+        const endTimeMs = new Date().getTime();
+        // Difference is in milliseconds (ms)
+        const differenceMs = endTimeMs - startTimeMs;
+
+        // Convert milliseconds to seconds (divide by 1000)
+        const differenceSec = differenceMs / 1000;
+        console.log(`Time difference: **${differenceSec.toFixed(3)} seconds**`);
       }
     }, stepMs);
   }
