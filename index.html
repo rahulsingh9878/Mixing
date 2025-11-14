@@ -696,9 +696,9 @@ h1 {
     try { if (vol1 > 0) player1.playVideo(); } catch(e){}
     try { if (vol2 > 0) player2.playVideo(); } catch(e){}
 
-    const totalFadeTime = 3000;
+    const totalFadeTime = 5000;
     const stepMs = totalFadeTime / maxVol;
-    const volStep = Number((maxVol / 100).toFixed(1));
+    const volStep = Number((maxVol / stepMs).toFixed(1));
     const startTimeMs = new Date().getTime();
     console.log(`Start Time (ms): ${startTimeMs}`);
 
@@ -730,7 +730,7 @@ h1 {
 
         // Convert milliseconds to seconds (divide by 1000)
         const differenceSec = differenceMs / 1000;
-        console.log(`Time difference: **${differenceSec.toFixed(3)} seconds**`);
+        console.log(`Time difference: **${differenceSec.toFixed(1)} seconds**`);
       }
     }, stepMs);
   }
