@@ -696,9 +696,10 @@ h1 {
     try { if (vol1 > 0) player1.playVideo(); } catch(e){}
     try { if (vol2 > 0) player2.playVideo(); } catch(e){}
 
-    const totalFadeTime = 2000;
+    const totalFadeTime = 3000;
     const stepMs = totalFadeTime / maxVol;
     const volStep = maxVol / 100;
+
     fadeInterval = setInterval(() => {
       if (direction) {
         if (vol1 > 0) vol1-=volStep;
@@ -720,6 +721,7 @@ h1 {
         clearInterval(fadeInterval);
         fadeInterval = null;
         direction = !direction;
+        console.log("Faderue", direction);
       }
     }, stepMs);
   }
