@@ -861,6 +861,14 @@ async function getNextSong(data) {
     }
   }
 
+function changeVol(vol){
+  if (player1.getPlayerState() == YT.PlayerState.PLAYING){
+      player1.setVolume(vol);
+  } else {
+    player2.setVolume(vol);
+  }
+}
+
 let wsuri = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/ws/"
 const ws = new WebSocket(wsuri);
 ws.onopen = () => console.log("WS open");
@@ -885,6 +893,31 @@ function palythis(){
   };
   ws.onclose = () => console.log("WS closed");
 }
+
+// Volume control WebSocket
+let volumeWsUri = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/ws/vol/"
+const volumeWs = new WebSocket(volumeWsUri);
+volumeWs.onopen = () => console.log("Volume WS open");
+volumeWs.onmessage = (ev) => {
+  // server sends JSON like {"volume": "50"}
+  const data = JSON.parse(ev.data);
+  const vol = parseInt(data.volume);
+  console.log("Received volume:", vol);
+  changeVol(vol);
+};
+volumeWs.onclose = () => {
+  console.log("Volume WS closed");
+  // Optionally reconnect after a delay
+  setTimeout(() => {
+    const volumeWs = new WebSocket(volumeWsUri);
+    volumeWs.onopen = () => console.log("Volume WS reconnected");
+    volumeWs.onmessage = (ev) => {
+      const data = JSON.parse(ev.data);
+      const vol = parseInt(data.volume);
+      changeVol(vol);
+    };
+  }, 3000);
+};
 
     
   </script>
