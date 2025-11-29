@@ -1,35 +1,48 @@
 /* ---------- Styles (same modern look + background) ---------- */
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
 body {
-    font-family: 'Montserrat', sans-serif;
-    background: 
-      linear-gradient(to bottom, #000000, #1a1a1a);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    height: 102vh; /* Ensure body takes full viewport height */
+  height: 100%;
+}
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  background:
+    linear-gradient(to bottom, #000000, #1a1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  height: 102vh;
+  /* Ensure body takes full viewport height */
 }
 
 .app {
-  width: 100%; /* Ensure it takes full width on smaller screens */
-  max-width: 2600px; /* Limit size on desktop */
-  margin: 0 auto; /* Center the container horizontally */
+  width: 100%;
+  /* Ensure it takes full width on smaller screens */
+  max-width: 2600px;
+  /* Limit size on desktop */
+  margin: 0 auto;
+  /* Center the container horizontally */
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
-} 
+}
 
 h1 {
-  background: linear-gradient(to right, #c7c3c3, #3c3333); 
-  -webkit-background-clip: text; 
+  background: linear-gradient(to right, #c7c3c3, #3c3333);
+  -webkit-background-clip: text;
   background-clip: text;
-  -webkit-text-fill-color: transparent; 
-  color: transparent; 
+  -webkit-text-fill-color: transparent;
+  color: transparent;
   letter-spacing: 7px;
-  text-shadow: 0 0 12px rgba(0,255,229,0.12);
+  text-shadow: 0 0 12px rgba(0, 255, 229, 0.12);
   font-weight: 700;
 }
 
@@ -40,27 +53,29 @@ h1 {
 .video-container {
   position: relative;
   /* Now it takes 100% of the parent (.app) width up to its max-width */
-  width: 100%; 
-  max-width: 2600px; /* Limit the size of the video element on desktop */
-  
+  width: 100%;
+  max-width: 2600px;
+  /* Limit the size of the video element on desktop */
+
   /* The core responsive trick: remove fixed height and use padding-bottom to maintain aspect ratio */
-  height: 0; 
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio (9 / 16 = 0.5625) */
+  height: 0;
+  padding-bottom: 56.25%;
+  /* 16:9 Aspect Ratio (9 / 16 = 0.5625) */
 
   border-radius: 5px;
   overflow: hidden;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 0 80px rgba(0,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.03);
-  background: rgba(6,10,20,0.2);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 0 80px rgba(0, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(6, 10, 20, 0.2);
 }
 
 .yt-player {
   /* This must be absolute to fit exactly into the space created by padding-bottom */
-  position: absolute; 
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  transition: opacity 0.6s cubic-bezier(.2,.9,.2,1);
+  transition: opacity 0.6s cubic-bezier(.2, .9, .2, 1);
   pointer-events: none;
 }
 
@@ -69,13 +84,13 @@ h1 {
   left: 18px;
   bottom: 18px;
   z-index: 99;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   padding: 10px 14px;
   border-radius: 10px;
   backdrop-filter: blur(6px);
   color: #cfeff6;
   font-size: 13px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
   max-width: 300px;
 }
 
@@ -91,91 +106,135 @@ h1 {
 }
 
 .notification {
-  width: 5px; /* Adjust size as needed */
-  height: 5px; /* Adjust size as needed */
+  width: 5px;
+  /* Adjust size as needed */
+  height: 5px;
+  /* Adjust size as needed */
   background-color: rgb(119, 255, 104);
   position: fixed;
   top: 30px;
   right: 30px;
-  z-index: 1000; /* Ensure it's above other content */
-  display: none; /* Hidden by default */
-  border-radius: 50%; /* This makes it a circle */
+  z-index: 1000;
+  /* Ensure it's above other content */
+  display: none;
+  /* Hidden by default */
+  border-radius: 50%;
+  /* This makes it a circle */
 }
 
-  /* Keyframe animation for blinking */
-  @keyframes blink {
-      0% { opacity: 1; }
-      50% { opacity: 0; }
-      100% { opacity: 1; }
-  }
-
-  /* Class to apply the blinking animation */
-  .blinking {
-      animation: blink 1s infinite; /* 0.5s per cycle, infinite repetitions */
-  }
-
-  .controls {
-    width: 100%;
-    display: flex-start;
-    justify-content: left;
-  }
-
-  .input-wrapper {
-    position: absolute;
-    left: 0px;
-    bottom: 0px;
-    z-index: 99;
-    /* position: relative; */
-    opacity: 0;
-    transition: opacity 0.3s ease;
-  }
-
-  .input-wrapper:focus-within {
+/* Keyframe animation for blinking */
+@keyframes blink {
+  0% {
     opacity: 1;
   }
 
-.input-wrapper::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0%;
-    height: 3px;
-    background: linear-gradient(90deg, #6effff, #6b8aff);
-    transition: width 0.4s ease;
-    border-radius: 2px;
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 
-  .input-wrapper:focus-within::after { width: 100%; }
+/* Class to apply the blinking animation */
+.blinking {
+  animation: blink 1s infinite;
+  /* 0.5s per cycle, infinite repetitions */
+}
 
-  form#videoForm { width: 100%; }
+.controls {
+  width: 100%;
+  display: flex-start;
+  justify-content: left;
+}
 
-  input[type="text"] {
+.input-wrapper {
+  position: absolute;
+  left: 0px;
+  bottom: 0px;
+  z-index: 99;
+  /* position: relative; */
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+  opacity: 1;
+}
+
+.input-wrapper::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(90deg, #6effff, #6b8aff);
+  transition: width 0.4s ease;
+  border-radius: 2px;
+}
+
+.input-wrapper:focus-within::after {
+  width: 100%;
+}
+
+form#videoForm {
+  width: 100%;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 16px 54px 16px 18px;
+  font-size: 16px;
+  color: #e7fbff;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  outline: none;
+  backdrop-filter: blur(6px);
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+input::placeholder {
+  color: rgba(180, 220, 230, 0.55);
+  transition: color 0.3s ease;
+}
+
+input:focus {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 2000px) {
+  .video-container {
+    height: 520px;
+  }
+
+  .input-wrapper {
     width: 100%;
-    padding: 16px 54px 16px 18px;
-    font-size: 16px;
-    color: #e7fbff;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 4px;
-    outline: none;
-    backdrop-filter: blur(6px);
-    box-shadow: none;
-    transition: all 0.3s ease;
+  }
+}
+
+@media (max-width: 1000px) {
+  .video-container {
+    height: 360px;
   }
 
-  input::placeholder { 
-    color: rgba(180,220,230,0.55); 
-    transition: color 0.3s ease;
+  .input-wrapper {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .video-container {
+    height: 240px;
   }
 
-  input:focus { 
-    background: rgba(255,255,255,0.06); 
-    border: 1px solid rgba(255,255,255,0.03);
-    box-shadow: inset 0 2px 10px rgba(0,0,0,0.45);
-    transform: translateY(-1px); 
+  .input-wrapper {
+    width: 100%;
   }
-
-  @media (max-width: 2000px) { .video-container { height: 520px; } .input-wrapper { width: 100%; } }
-  @media (max-width: 1000px) { .video-container { height: 360px; } .input-wrapper { width: 100%; } }
-  @media (max-width: 520px) { .video-container { height: 240px; } .input-wrapper { width: 100%; } }
+}
