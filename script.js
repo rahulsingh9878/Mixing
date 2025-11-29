@@ -665,7 +665,7 @@ async function getNextSong(data) {
 }
 
 const WS_BASE_URL = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
-let wsuri = `${WS_BASE_URL}ws/`
+let wsuri = `${WS_BASE_URL}ws/`;
 const ws = new WebSocket(wsuri);
 ws.onopen = () => console.log("WS open");
 ws.onmessage = (ev) => {
@@ -701,7 +701,7 @@ function changeVol(vol) {
 }
 
 // Volume control WebSocket
-let volumeWsUri = `${WS_BASE_URL}ws/vol/`
+let volumeWsUri = `${WS_BASE_URL}ws/vol/`;
 const volumeWs = new WebSocket(volumeWsUri);
 volumeWs.onopen = () => console.log("Volume WS open");
 volumeWs.onmessage = (ev) => {
