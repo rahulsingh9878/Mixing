@@ -829,19 +829,23 @@ async function fetchQRCode() {
     if (!response.ok) throw new Error("Failed to fetch QR code");
 
     // The request returns a base64img string
-    const base64img = await response.text();
+    let base64img = await response.text();
+
+    // Clean up the string: remove quotes, whitespace, or potential JSON wrappers
+    base64img = base64img.trim().replace(/^"|"$/g, '');
 
     const qrImage = document.getElementById('qrImage');
     // If it's already a full data URL, use it directly. Otherwise, prefix it.
     if (base64img.startsWith('data:image')) {
-      qrImage.src = base64img.trim();
+      qrImage.src = base64img;
     } else {
-      qrImage.src = `data:image/png;base64,${base64img.trim()}`;
+      qrImage.src = `data:image/png;base64,${base64img}`;
     }
   } catch (error) {
     console.error("Error fetching QR code:", error);
   }
 }
+
 
 function toggleQROverlay() {
   const overlay = document.getElementById('qrOverlay');
