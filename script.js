@@ -811,13 +811,21 @@ function initVolumeWebSocket() {
 // Initialize the volume WebSocket connection on page load
 initVolumeWebSocket();
 
+// Fetch QR code on page load
+document.addEventListener('DOMContentLoaded', fetchQRCode);
+
+
 /* ===================== QR Code Manager ===================== */
 const QR_API_URL = "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
 let qrVisible = false;
 
 async function fetchQRCode() {
   try {
-    const response = await fetch(QR_API_URL);
+    const response = await fetch(QR_API_URL, {
+      headers: {
+        "ngrok-skip-browser-warning": "true"
+      }
+    });
     if (!response.ok) throw new Error("Failed to fetch QR code");
 
     // The request returns a base64img string
