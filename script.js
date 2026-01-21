@@ -810,3 +810,57 @@ function initVolumeWebSocket() {
 
 // Initialize the volume WebSocket connection on page load
 initVolumeWebSocket();
+
+/* ===================== QR Code Manager ===================== */
+const QR_API_URL = "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
+let qrVisible = false;
+
+async function fetchQRCode() {
+  try {
+    const response = await fetch(QR_API_URL);
+    if (!response.ok) throw new Error("Failed to fetch QR code");
+
+    // The request returns a base64img string
+    const base64img = await response.text();
+
+    const qrImage = document.getElementById('qrImage');
+    // If it's already a full data URL, use it directly. Otherwise, prefix it.
+    if (base64img.startsWith('data:image')) {
+      qrImage.src = base64img.trim();
+    } else {
+      qrImage.src = `data:image/png;base64,${base64img.trim()}`;
+    }
+  } catch (error) {
+    console.error("Error fetching QR code:", error);
+  }
+}
+
+function toggleQROverlay() {
+  const overlay = document.getElementById('qrOverlay');
+  qrVisible = !qrVisible;
+
+  if (qrVisible) {
+    fetchQRCode();
+    overlay.style.display = 'flex';
+    // Small delay to allow display: flex to take effect before adding opacity
+    setTimeout(() => overlay.classList.add('visible'), 10);
+  } else {
+    overlay.classList.remove('visible');
+    // Wait for transition to finish before hiding
+    setTimeout(() => {
+      if (!qrVisible) overlay.style.display = 'none';
+    }, 400);
+  }
+}
+
+// Key listener for QR code toggle
+document.addEventListener('keydown', (event) => {
+  if ((event.key === 'q' || event.key === 'Q') && document.activeElement.tagName !== 'INPUT') {
+    toggleQROverlay();
+  }
+
+  if (event.key === 'Escape' && qrVisible) {
+    toggleQROverlay();
+  }
+});
+
