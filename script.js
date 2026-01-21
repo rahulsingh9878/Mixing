@@ -664,31 +664,73 @@ async function getNextSong(data) {
   }
 }
 
+/* ===================== WebSocket Connection Manager ===================== */
 const WS_BASE_URL = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
-let wsuri = `${WS_BASE_URL}ws/`;
-const ws = new WebSocket(wsuri);
-ws.onopen = () => console.log("WS open");
-ws.onmessage = (ev) => {
-  // server sends JSON like {"video_id": "abc123"}
-  const data = JSON.parse(ev.data);
-  getNextSong(data);
+const WS_RECONNECT_INTERVAL = 3000; // Initial reconnection delay (3 seconds)
+const WS_MAX_RECONNECT_INTERVAL = 30000; // Maximum reconnection delay (30 seconds)
 
-  // do something e.g. play the video_id
-};
-ws.onclose = () => console.log("WS closed");
+let ws = null;
+let wsReconnectTimeout = null;
+let wsReconnectAttempts = 0;
+let wsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
 
-function palythis() {
-  const ws = new WebSocket(wsuri);
-  ws.onopen = () => console.log("WS open");
-  ws.onmessage = (ev) => {
-    // server sends JSON like {"video_id": "abc123"}
-    const data = JSON.parse(ev.data);
-    getNextSong(data);
+/**
+ * Initialize the main WebSocket connection for song control
+ */
+function initMainWebSocket() {
+  const wsuri = `${WS_BASE_URL}ws/`;
 
-    // do something e.g. play the video_id
+  // Clear any existing connection
+  if (ws) {
+    ws.onclose = null; // Prevent triggering reconnection
+    ws.close();
+  }
+
+  console.log(`[Main WS] Connecting to ${wsuri}...`);
+  ws = new WebSocket(wsuri);
+
+  ws.onopen = () => {
+    console.log("[Main WS] ✅ Connected");
+    wsReconnectAttempts = 0;
+    wsCurrentReconnectDelay = WS_RECONNECT_INTERVAL; // Reset delay on successful connection
   };
-  ws.onclose = () => console.log("WS closed");
+
+  ws.onmessage = (ev) => {
+    try {
+      // Server sends JSON like {"title": "...", "videoId": "...", "timestamp": ...}
+      const data = JSON.parse(ev.data);
+      getNextSong(data);
+    } catch (error) {
+      console.error("[Main WS] Error parsing message:", error);
+    }
+  };
+
+  ws.onerror = (error) => {
+    console.error("[Main WS] ❌ Error:", error);
+  };
+
+  ws.onclose = (event) => {
+    console.log(`[Main WS] 🔌 Disconnected (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`);
+
+    // Clear any pending reconnection
+    if (wsReconnectTimeout) {
+      clearTimeout(wsReconnectTimeout);
+    }
+
+    // Attempt to reconnect with exponential backoff
+    wsReconnectAttempts++;
+    console.log(`[Main WS] 🔄 Reconnecting in ${wsCurrentReconnectDelay / 1000}s (Attempt ${wsReconnectAttempts})...`);
+
+    wsReconnectTimeout = setTimeout(() => {
+      initMainWebSocket();
+      // Increase delay for next attempt (exponential backoff)
+      wsCurrentReconnectDelay = Math.min(wsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
+    }, wsCurrentReconnectDelay);
+  };
 }
+
+// Initialize the main WebSocket connection on page load
+initMainWebSocket();
 
 function changeVol(vol) {
   if (player1.getPlayerState() == YT.PlayerState.PLAYING) {
@@ -700,27 +742,71 @@ function changeVol(vol) {
   }
 }
 
-// Volume control WebSocket
-let volumeWsUri = `${WS_BASE_URL}ws/vol/`;
-const volumeWs = new WebSocket(volumeWsUri);
-volumeWs.onopen = () => console.log("Volume WS open");
-volumeWs.onmessage = (ev) => {
-  // server sends JSON like {"volume": "50"}
-  const data = JSON.parse(ev.data);
-  const vol = parseInt(data.volume);
-  // console.log("Received volume:", vol);
-  changeVol(vol);
-};
-volumeWs.onclose = () => {
-  console.log("Volume WS closed");
-  // Optionally reconnect after a delay
-  setTimeout(() => {
-    const volumeWs = new WebSocket(volumeWsUri);
-    volumeWs.onopen = () => console.log("Volume WS reconnected");
-    volumeWs.onmessage = (ev) => {
+/* ===================== Volume WebSocket Connection Manager ===================== */
+let volumeWs = null;
+let volumeWsReconnectTimeout = null;
+let volumeWsReconnectAttempts = 0;
+let volumeWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
+
+/**
+ * Initialize the volume control WebSocket connection
+ */
+function initVolumeWebSocket() {
+  const volumeWsUri = `${WS_BASE_URL}ws/vol/`;
+
+  // Clear any existing connection
+  if (volumeWs) {
+    volumeWs.onclose = null; // Prevent triggering reconnection
+    volumeWs.close();
+  }
+
+  console.log(`[Volume WS] Connecting to ${volumeWsUri}...`);
+  volumeWs = new WebSocket(volumeWsUri);
+
+  volumeWs.onopen = () => {
+    console.log("[Volume WS] ✅ Connected");
+    volumeWsReconnectAttempts = 0;
+    volumeWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL; // Reset delay on successful connection
+  };
+
+  volumeWs.onmessage = (ev) => {
+    try {
+      // Server sends JSON like {"volume": "50"}
       const data = JSON.parse(ev.data);
       const vol = parseInt(data.volume);
-      changeVol(vol);
-    };
-  }, 3000);
-};
+      if (!isNaN(vol) && vol >= 0 && vol <= 100) {
+        changeVol(vol);
+      } else {
+        console.warn("[Volume WS] Invalid volume value:", data.volume);
+      }
+    } catch (error) {
+      console.error("[Volume WS] Error parsing message:", error);
+    }
+  };
+
+  volumeWs.onerror = (error) => {
+    console.error("[Volume WS] ❌ Error:", error);
+  };
+
+  volumeWs.onclose = (event) => {
+    console.log(`[Volume WS] 🔌 Disconnected (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`);
+
+    // Clear any pending reconnection
+    if (volumeWsReconnectTimeout) {
+      clearTimeout(volumeWsReconnectTimeout);
+    }
+
+    // Attempt to reconnect with exponential backoff
+    volumeWsReconnectAttempts++;
+    console.log(`[Volume WS] 🔄 Reconnecting in ${volumeWsCurrentReconnectDelay / 1000}s (Attempt ${volumeWsReconnectAttempts})...`);
+
+    volumeWsReconnectTimeout = setTimeout(() => {
+      initVolumeWebSocket();
+      // Increase delay for next attempt (exponential backoff)
+      volumeWsCurrentReconnectDelay = Math.min(volumeWsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
+    }, volumeWsCurrentReconnectDelay);
+  };
+}
+
+// Initialize the volume WebSocket connection on page load
+initVolumeWebSocket();
