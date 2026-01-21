@@ -852,14 +852,27 @@ function toggleQROverlay() {
     overlay.style.display = 'flex';
     // Small delay to allow display: flex to take effect before adding opacity
     setTimeout(() => overlay.classList.add('visible'), 10);
+
+    // Pause both players
+    try { if (player1 && player1.pauseVideo) player1.pauseVideo(); } catch (e) { }
+    try { if (player2 && player2.pauseVideo) player2.pauseVideo(); } catch (e) { }
   } else {
     overlay.classList.remove('visible');
     // Wait for transition to finish before hiding
     setTimeout(() => {
       if (!qrVisible) overlay.style.display = 'none';
     }, 400);
+
+    // Resume the player that should be active based on opacity
+    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+    if (p1Opacity > 0.5) {
+      try { if (player1 && player1.playVideo) player1.playVideo(); } catch (e) { }
+    } else {
+      try { if (player2 && player2.playVideo) player2.playVideo(); } catch (e) { }
+    }
   }
 }
+
 
 // Key listener for QR code toggle
 document.addEventListener('keydown', (event) => {
