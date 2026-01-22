@@ -34,18 +34,31 @@ body {
 
 h1 {
   position: absolute;
-  top: 4vh;
-  background: linear-gradient(to right, #ffffff, #888888);
+  top: 3vh;
+  left: 3vw;
+  background: linear-gradient(to right, #ffffff, #aaaaaa);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: 8px;
-  text-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+  letter-spacing: 6px;
+  text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
   font-weight: 700;
-  font-size: 1.8rem;
-  z-index: 10;
-  opacity: 0.4;
+  font-size: 2.2rem;
+  z-index: 100;
+  opacity: 0.8;
   pointer-events: none;
+  animation: fadeOut 1s ease-in-out forwards 5s;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 0.8;
+  }
+
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 /* Video Container: Fills as much of the screen as possible while maintaining 16:9 */
