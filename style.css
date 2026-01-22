@@ -39,12 +39,12 @@ h1 {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: 12px;
-  text-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+  letter-spacing: 8px;
+  text-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
   font-weight: 700;
-  font-size: 3.5rem;
+  font-size: 1.8rem;
   z-index: 10;
-  opacity: 0.6;
+  opacity: 0.4;
   pointer-events: none;
 }
 
@@ -52,14 +52,16 @@ h1 {
 .video-container {
   position: relative;
   width: 100vw;
-  height: 56.25vw; /* 16:9 ratio based on width */
+  height: 56.25vw;
+  /* 16:9 ratio based on width */
   max-width: 100vw;
   max-height: 100vh;
-  
+
   /* If the screen is taller than 16:9, it fits width. If wider, it fits height. */
   aspect-ratio: 16 / 9;
-  
-  border-radius: 0; /* Full screen looks better without borders on TV */
+
+  border-radius: 0;
+  /* Full screen looks better without borders on TV */
   overflow: hidden;
   box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
   background: #000;
@@ -172,8 +174,15 @@ input:focus {
 }
 
 @keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .blinking {
