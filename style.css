@@ -106,26 +106,26 @@ h1 {
   bottom: 5vh;
   z-index: 99;
   background: rgba(0, 0, 0, 0.7);
-  padding: 20px 30px;
-  border-radius: 15px;
+  padding: 10px 15px;
+  border-radius: 8px;
   backdrop-filter: blur(10px);
   color: #cfeff6;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  max-width: 300px;
+  max-width: 200px;
 }
 
 .overlay-info .mode {
   font-weight: 700;
   color: #6effff;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   text-transform: uppercase;
   letter-spacing: 2px;
 }
 
 .overlay-info .count {
-  font-size: 0.7rem;
+  font-size: 0.55rem;
   opacity: 0.6;
 }
 
