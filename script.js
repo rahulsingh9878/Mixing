@@ -161,16 +161,16 @@ function onYouTubeIframeAPIReady() {
   player1 = new YT.Player('player1', {
     videoId: defaultVideo1,
     playerVars: {
-                    'autoplay': 1,
-                    'start': 12,
-                    'controls': 1,
-                    'rel': 0,
-                    'mute': 0,
-                    'showinfo': 0,
-                    'modestbranding': 1,
-                    'enablejsapi': 1,
-                    'origin': window.location.origin || 'http://localhost' 
-                },
+      'autoplay': 1,
+      'start': 12,
+      'controls': 0,
+      'rel': 0,
+      'mute': 0,
+      'showinfo': 0,
+      'modestbranding': 1,
+      'enablejsapi': 1,
+      'origin': window.location.origin || 'http://localhost'
+    },
     events: {
       'onStateChange': onPlayerStateChange
     }
@@ -178,16 +178,16 @@ function onYouTubeIframeAPIReady() {
 
   player2 = new YT.Player('player2', {
     videoId: defaultVideo2,
-      playerVars: {
-                    'autoplay': 0,
-                    'start': 12,
-                    'controls': 0,
-                    'rel': 0,
-                    'showinfo': 0,
-                    'modestbranding': 1,
-                    'enablejsapi': 1,
-                    'origin': window.location.origin || 'http://localhost' 
-                },
+    playerVars: {
+      'autoplay': 0,
+      'start': 12,
+      'controls': 0,
+      'rel': 0,
+      'showinfo': 0,
+      'modestbranding': 1,
+      'enablejsapi': 1,
+      'origin': window.location.origin || 'http://localhost'
+    },
     events: {
       'onStateChange': onPlayerStateChange
     }
@@ -685,7 +685,7 @@ async function getNextSong(data) {
 
 /* ===================== WebSocket Connection Manager ===================== */
 const WS_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "ws://0.0.0.0:8045/" : "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
+  ? "ws://0.0.0.0:8045/" : "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
 const WS_RECONNECT_INTERVAL = 3000; // Initial reconnection delay (3 seconds)
 const WS_MAX_RECONNECT_INTERVAL = 30000; // Maximum reconnection delay (30 seconds)
 
@@ -837,8 +837,8 @@ document.addEventListener('DOMContentLoaded', fetchQRCode);
 
 /* ===================== QR Code Manager ===================== */
 const QR_API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "http://0.0.0.0:8045/qr/"
-    : "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
+  ? "http://0.0.0.0:8045/qr/"
+  : "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
 let qrVisible = false;
 
 async function fetchQRCode() {
@@ -911,3 +911,34 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
+// In script.js (loaded by index.html)
+window.addEventListener('tv-fullscreen', () => {
+  // Toggle fullscreen mode
+});
+window.addEventListener('tv-show-qr', () => {
+  // Show QR code overlay
+});
+window.addEventListener('tv-play-pause', () => {
+  // Toggle video playback
+});
+window.addEventListener('tv-play', () => {
+  // Play video
+});
+window.addEventListener('tv-pause', () => {
+  // Pause video
+});
+/* ===================== Inactivity Handler (Hide Cursor) ===================== */
+let inactivityTimer;
+const hideCursor = () => document.body.classList.add('hide-cursor');
+const showCursor = () => {
+  document.body.classList.remove('hide-cursor');
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(hideCursor, 5000);
+};
+
+document.addEventListener('mousemove', showCursor);
+document.addEventListener('keydown', showCursor);
+document.addEventListener('touchstart', showCursor);
+
+// Initial start
+inactivityTimer = setTimeout(hideCursor, 5000);

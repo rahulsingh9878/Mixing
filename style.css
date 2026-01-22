@@ -254,3 +254,10 @@ input:focus {
   letter-spacing: 1px;
   text-transform: uppercase;
 }
+/* Hide cursor on inactivity */
+body.hide-cursor {
+  cursor: none !important;
+}
+body.hide-cursor * {
+  cursor: none !important;
+}
