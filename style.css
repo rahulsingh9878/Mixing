@@ -102,7 +102,7 @@ h1 {
 
 .overlay-info {
   position: absolute;
-  left: 5vw;
+  left: 2vw;
   bottom: 5vh;
   z-index: 99;
   background: rgba(0, 0, 0, 0.7);
