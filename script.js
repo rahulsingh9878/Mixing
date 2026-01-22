@@ -160,7 +160,17 @@ function ensurePlayerReady(player, attempts = 12, interval = 300) {
 function onYouTubeIframeAPIReady() {
   player1 = new YT.Player('player1', {
     videoId: defaultVideo1,
-    playerVars: { autoplay: 1, start: 12, controls: 0, rel: 0, mute: 0, enablejsapi: 1 },
+    playerVars: {
+                    'autoplay': 1,
+                    'start': 12,
+                    'controls': 1,
+                    'rel': 0,
+                    'mute': 0,
+                    'showinfo': 0,
+                    'modestbranding': 1,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin || 'http://localhost' 
+                },
     events: {
       'onStateChange': onPlayerStateChange
     }
@@ -168,7 +178,16 @@ function onYouTubeIframeAPIReady() {
 
   player2 = new YT.Player('player2', {
     videoId: defaultVideo2,
-    playerVars: { autoplay: 0, start: 12, controls: 0, rel: 0, enablejsapi: 1 },
+      playerVars: {
+                    'autoplay': 0,
+                    'start': 12,
+                    'controls': 0,
+                    'rel': 0,
+                    'showinfo': 0,
+                    'modestbranding': 1,
+                    'enablejsapi': 1,
+                    'origin': window.location.origin || 'http://localhost' 
+                },
     events: {
       'onStateChange': onPlayerStateChange
     }
@@ -665,7 +684,8 @@ async function getNextSong(data) {
 }
 
 /* ===================== WebSocket Connection Manager ===================== */
-const WS_BASE_URL = "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
+const WS_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "ws://0.0.0.0:8045/" : "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
 const WS_RECONNECT_INTERVAL = 3000; // Initial reconnection delay (3 seconds)
 const WS_MAX_RECONNECT_INTERVAL = 30000; // Maximum reconnection delay (30 seconds)
 
@@ -816,7 +836,9 @@ document.addEventListener('DOMContentLoaded', fetchQRCode);
 
 
 /* ===================== QR Code Manager ===================== */
-const QR_API_URL = "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
+const QR_API_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://0.0.0.0:8045/qr/"
+    : "https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/";
 let qrVisible = false;
 
 async function fetchQRCode() {
