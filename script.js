@@ -62,7 +62,7 @@ let player1 = null, player2 = null;
 let fadeInterval = null;
 let direction = true; // true: p1 fades OUT -> p2 fades IN ; next click toggles
 
-const defaultVideo1 = "8SYPKQMW_2Q";
+const defaultVideo1 = "4rJ9z6IXnb8";
 const defaultVideo2 = "p2EdDiiVHh4";
 
 // Playlist mode variables

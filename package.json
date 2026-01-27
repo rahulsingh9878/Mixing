@@ -1,0 +1,13 @@
+{
+    "name": "pmx-video-dj-server",
+    "version": "1.0.0",
+    "description": "Local server with mDNS discovery for Google TV app",
+    "main": "broadcast_server.js",
+    "scripts": {
+        "start": "node broadcast_server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "bonjour-service": "^1.1.1"
+    }
+}
