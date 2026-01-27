@@ -368,10 +368,28 @@ function loadNextFromPlaylist() {
 
   console.log(`Loading track ${currentPlaylistIndex + 1}/${currentPlaylist.length}: ${nextVideoId}`);
   updateOverlayInfo();
-  newSong = nextVideoId
+  nextSong = nextVideoId;
   loadIntoInactiveAndCrossfade(nextVideoId);
 
-  // Reset flag after crossfade completes (about 9 seconds: 3s buffer + 6s fade)
+  // Reset flag after crossfade completes
+  setTimeout(() => {
+    hasLoadedNext = false;
+  }, 15000);
+}
+
+function loadPrevFromPlaylist() {
+  if (!playlistMode || currentPlaylist.length === 0 || hasLoadedNext) return;
+
+  hasLoadedNext = true;
+
+  currentPlaylistIndex = (currentPlaylistIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+  const prevVideoId = currentPlaylist[currentPlaylistIndex];
+
+  console.log(`Loading previous track ${currentPlaylistIndex + 1}/${currentPlaylist.length}: ${prevVideoId}`);
+  updateOverlayInfo();
+  nextSong = prevVideoId;
+  loadIntoInactiveAndCrossfade(prevVideoId);
+
   setTimeout(() => {
     hasLoadedNext = false;
   }, 15000);
@@ -831,6 +849,92 @@ function initVolumeWebSocket() {
 // Initialize the volume WebSocket connection on page load
 initVolumeWebSocket();
 
+/* ===================== Player Control WebSocket ===================== */
+let playerWs = null;
+let playerWsReconnectTimeout = null;
+let playerWsReconnectAttempts = 0;
+let playerWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
+
+/**
+ * Initialize the player control WebSocket connection
+ */
+function initPlayerControlWebSocket() {
+  const playerWsUri = `${WS_BASE_URL}ws/player/`;
+
+  // Clear any existing connection
+  if (playerWs) {
+    playerWs.onclose = null;
+    playerWs.close();
+  }
+
+  console.log(`[Player WS] Connecting to ${playerWsUri}...`);
+  playerWs = new WebSocket(playerWsUri);
+
+  playerWs.onopen = () => {
+    console.log("[Player WS] ✅ Connected");
+    playerWsReconnectAttempts = 0;
+    playerWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
+  };
+
+  playerWs.onmessage = (ev) => {
+    try {
+      const data = JSON.parse(ev.data);
+      console.log("[Player WS] Action received:", data.action);
+
+      const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+      const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+
+      switch (data.action) {
+        case 'toggle':
+          if (data.state === 'playing') {
+            try { activePlayer.playVideo(); } catch (e) { }
+          } else if (data.state === 'paused') {
+            try { activePlayer.pauseVideo(); } catch (e) { }
+          } else {
+            const state = activePlayer.getPlayerState();
+            if (state === YT.PlayerState.PLAYING) {
+              try { activePlayer.pauseVideo(); } catch (e) { }
+            } else {
+              try { activePlayer.playVideo(); } catch (e) { }
+            }
+          }
+          break;
+        case 'next':
+          loadNextFromPlaylist();
+          break;
+        case 'prev':
+          loadPrevFromPlaylist();
+          break;
+      }
+    } catch (error) {
+      console.error("[Player WS] Error parsing message:", error);
+    }
+  };
+
+  playerWs.onerror = (error) => {
+    console.error("[Player WS] ❌ Error:", error);
+  };
+
+  playerWs.onclose = (event) => {
+    console.log(`[Player WS] 🔌 Disconnected (Code: ${event.code})`);
+
+    if (playerWsReconnectTimeout) {
+      clearTimeout(playerWsReconnectTimeout);
+    }
+
+    playerWsReconnectAttempts++;
+    console.log(`[Player WS] 🔄 Reconnecting in ${playerWsCurrentReconnectDelay / 1000}s...`);
+
+    playerWsReconnectTimeout = setTimeout(() => {
+      initPlayerControlWebSocket();
+      playerWsCurrentReconnectDelay = Math.min(playerWsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
+    }, playerWsCurrentReconnectDelay);
+  };
+}
+
+// Initialize the player control WebSocket connection
+initPlayerControlWebSocket();
+
 // Fetch QR code on page load
 document.addEventListener('DOMContentLoaded', fetchQRCode);
 
@@ -913,19 +1017,36 @@ document.addEventListener('keydown', (event) => {
 
 // In script.js (loaded by index.html)
 window.addEventListener('tv-fullscreen', () => {
-  // Toggle fullscreen mode
+  toggleFullscreen();
 });
 window.addEventListener('tv-show-qr', () => {
-  // Show QR code overlay
+  toggleQROverlay();
 });
 window.addEventListener('tv-play-pause', () => {
-  // Toggle video playback
+  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  const state = activePlayer.getPlayerState();
+  if (state === YT.PlayerState.PLAYING) {
+    try { activePlayer.pauseVideo(); } catch (e) { }
+  } else {
+    try { activePlayer.playVideo(); } catch (e) { }
+  }
 });
 window.addEventListener('tv-play', () => {
-  // Play video
+  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  try { activePlayer.playVideo(); } catch (e) { }
 });
 window.addEventListener('tv-pause', () => {
-  // Pause video
+  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  try { activePlayer.pauseVideo(); } catch (e) { }
+});
+window.addEventListener('tv-next', () => {
+  loadNextFromPlaylist();
+});
+window.addEventListener('tv-prev', () => {
+  loadPrevFromPlaylist();
 });
 /* ===================== Inactivity Handler (Hide Cursor) ===================== */
 let inactivityTimer;
