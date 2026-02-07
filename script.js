@@ -701,239 +701,158 @@ async function getNextSong(data) {
   }
 }
 
-/* ===================== WebSocket Connection Manager ===================== */
-const WS_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-  ? "ws://0.0.0.0:8045/" : "wss://unappendaged-aretha-unwaning.ngrok-free.dev/";
-const WS_RECONNECT_INTERVAL = 3000; // Initial reconnection delay (3 seconds)
-const WS_MAX_RECONNECT_INTERVAL = 30000; // Maximum reconnection delay (30 seconds)
 
-let ws = null;
-let wsReconnectTimeout = null;
-let wsReconnectAttempts = 0;
-let wsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
-
-/**
- * Initialize the main WebSocket connection for song control
- */
-function initMainWebSocket() {
-  const wsuri = `${WS_BASE_URL}ws/`;
-
-  // Clear any existing connection
-  if (ws) {
-    ws.onclose = null; // Prevent triggering reconnection
-    ws.close();
+/* ===================== Unified Sync Client (Player Role) ===================== */
+class DJSyncClient {
+  constructor(role = 'player') {
+    this.role = role;
+    this.ws = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectDelay = 30000;
+    this.baseDelay = 3000;
+    this.pingInterval = null;
+    this.connect();
   }
 
-  console.log(`[Main WS] Connecting to ${wsuri}...`);
-  ws = new WebSocket(wsuri);
+  connect() {
+    // Determine the sync URL. In production/ngrok we might need the specific ngrok URL.
+    // However, usually we can use window.location if it's served from the same server.
+    // Given the previous code used a hardcoded ngrok for production:
+    const WS_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+      ? `ws://${window.location.hostname}:8000` // Assuming FastAPI runs on 8000 or the current port
+      : "wss://unappendaged-aretha-unwaning.ngrok-free.dev";
 
-  ws.onopen = () => {
-    console.log("[Main WS] ✅ Connected");
-    wsReconnectAttempts = 0;
-    wsCurrentReconnectDelay = WS_RECONNECT_INTERVAL; // Reset delay on successful connection
-  };
+    // Actually, let's try to be smart about the port if it's localhost
+    const host = window.location.port ? `${window.location.hostname}:${window.location.port}` : window.location.host;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-  ws.onmessage = (ev) => {
-    try {
-      // Server sends JSON like {"title": "...", "videoId": "...", "timestamp": ...}
-      const data = JSON.parse(ev.data);
-      getNextSong(data);
-    } catch (error) {
-      console.error("[Main WS] Error parsing message:", error);
-    }
-  };
+    // If we're using the separate broadcast server, we might need to stay with the hardcoded ones,
+    // but the task is to improve the socket connections to the BACKEND hub.
+    const url = `${protocol}//${host}/ws/sync?role=${this.role}`;
 
-  ws.onerror = (error) => {
-    console.error("[Main WS] ❌ Error:", error);
-  };
+    console.log(`[Sync Player] Connecting to ${url}...`);
+    this.ws = new WebSocket(url);
 
-  ws.onclose = (event) => {
-    console.log(`[Main WS] 🔌 Disconnected (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`);
+    this.ws.onopen = () => {
+      console.log("[Sync Player] ✅ Connected");
+      this.reconnectAttempts = 0;
+      this.startHeartbeat();
+    };
 
-    // Clear any pending reconnection
-    if (wsReconnectTimeout) {
-      clearTimeout(wsReconnectTimeout);
-    }
-
-    // Attempt to reconnect with exponential backoff
-    wsReconnectAttempts++;
-    console.log(`[Main WS] 🔄 Reconnecting in ${wsCurrentReconnectDelay / 1000}s (Attempt ${wsReconnectAttempts})...`);
-
-    wsReconnectTimeout = setTimeout(() => {
-      initMainWebSocket();
-      // Increase delay for next attempt (exponential backoff)
-      wsCurrentReconnectDelay = Math.min(wsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
-    }, wsCurrentReconnectDelay);
-  };
-}
-
-// Initialize the main WebSocket connection on page load
-initMainWebSocket();
-
-function changeVol(vol) {
-  if (player1.getPlayerState() == YT.PlayerState.PLAYING) {
-    player1.setVolume(vol);
-    maxVol = vol;
-  } else {
-    player2.setVolume(vol);
-    maxVol = vol;
-  }
-}
-
-/* ===================== Volume WebSocket Connection Manager ===================== */
-let volumeWs = null;
-let volumeWsReconnectTimeout = null;
-let volumeWsReconnectAttempts = 0;
-let volumeWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
-
-/**
- * Initialize the volume control WebSocket connection
- */
-function initVolumeWebSocket() {
-  const volumeWsUri = `${WS_BASE_URL}ws/vol/`;
-
-  // Clear any existing connection
-  if (volumeWs) {
-    volumeWs.onclose = null; // Prevent triggering reconnection
-    volumeWs.close();
-  }
-
-  console.log(`[Volume WS] Connecting to ${volumeWsUri}...`);
-  volumeWs = new WebSocket(volumeWsUri);
-
-  volumeWs.onopen = () => {
-    console.log("[Volume WS] ✅ Connected");
-    volumeWsReconnectAttempts = 0;
-    volumeWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL; // Reset delay on successful connection
-  };
-
-  volumeWs.onmessage = (ev) => {
-    try {
-      // Server sends JSON like {"volume": "50"}
-      const data = JSON.parse(ev.data);
-      const vol = parseInt(data.volume);
-      if (!isNaN(vol) && vol >= 0 && vol <= 100) {
-        changeVol(vol);
-      } else {
-        console.warn("[Volume WS] Invalid volume value:", data.volume);
+    this.ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        this.handleMessage(msg);
+      } catch (err) {
+        console.error("[Sync Player] Message parse error:", err);
       }
-    } catch (error) {
-      console.error("[Volume WS] Error parsing message:", error);
-    }
-  };
+    };
 
-  volumeWs.onerror = (error) => {
-    console.error("[Volume WS] ❌ Error:", error);
-  };
+    this.ws.onclose = () => {
+      console.log("[Sync Player] 🔌 Disconnected");
+      this.stopHeartbeat();
+      this.retry();
+    };
 
-  volumeWs.onclose = (event) => {
-    console.log(`[Volume WS] 🔌 Disconnected (Code: ${event.code}, Reason: ${event.reason || 'Unknown'})`);
-
-    // Clear any pending reconnection
-    if (volumeWsReconnectTimeout) {
-      clearTimeout(volumeWsReconnectTimeout);
-    }
-
-    // Attempt to reconnect with exponential backoff
-    volumeWsReconnectAttempts++;
-    console.log(`[Volume WS] 🔄 Reconnecting in ${volumeWsCurrentReconnectDelay / 1000}s (Attempt ${volumeWsReconnectAttempts})...`);
-
-    volumeWsReconnectTimeout = setTimeout(() => {
-      initVolumeWebSocket();
-      // Increase delay for next attempt (exponential backoff)
-      volumeWsCurrentReconnectDelay = Math.min(volumeWsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
-    }, volumeWsCurrentReconnectDelay);
-  };
-}
-
-// Initialize the volume WebSocket connection on page load
-initVolumeWebSocket();
-
-/* ===================== Player Control WebSocket ===================== */
-let playerWs = null;
-let playerWsReconnectTimeout = null;
-let playerWsReconnectAttempts = 0;
-let playerWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
-
-/**
- * Initialize the player control WebSocket connection
- */
-function initPlayerControlWebSocket() {
-  const playerWsUri = `${WS_BASE_URL}ws/player/`;
-
-  // Clear any existing connection
-  if (playerWs) {
-    playerWs.onclose = null;
-    playerWs.close();
+    this.ws.onerror = (err) => {
+      console.error("[Sync Player] ❌ Error:", err);
+    };
   }
 
-  console.log(`[Player WS] Connecting to ${playerWsUri}...`);
-  playerWs = new WebSocket(playerWsUri);
+  startHeartbeat() {
+    this.pingInterval = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.send('ping', { ts: Date.now() });
+      }
+    }, 10000);
+  }
 
-  playerWs.onopen = () => {
-    console.log("[Player WS] ✅ Connected");
-    playerWsReconnectAttempts = 0;
-    playerWsCurrentReconnectDelay = WS_RECONNECT_INTERVAL;
-  };
+  stopHeartbeat() {
+    if (this.pingInterval) clearInterval(this.pingInterval);
+  }
 
-  playerWs.onmessage = (ev) => {
-    try {
-      const data = JSON.parse(ev.data);
-      console.log("[Player WS] Action received:", data.action);
+  retry() {
+    const delay = Math.min(this.baseDelay * Math.pow(2, this.reconnectAttempts), this.maxReconnectDelay);
+    console.log(`[Sync Player] Retrying in ${delay / 1000}s...`);
+    setTimeout(() => {
+      this.reconnectAttempts++;
+      this.connect();
+    }, delay);
+  }
 
-      const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-      const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  send(type, data) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type, data }));
+    }
+  }
 
-      switch (data.action) {
-        case 'toggle':
-          if (data.state === 'playing') {
-            try { activePlayer.playVideo(); } catch (e) { }
-          } else if (data.state === 'paused') {
+  handleMessage(msg) {
+    const { type, data } = msg;
+    switch (type) {
+      case 'play':
+        console.log("[Sync Player] Play request:", data);
+        getNextSong(data);
+        break;
+      case 'vol':
+        const vol = parseInt(data.volume);
+        if (!isNaN(vol)) {
+          console.log("[Sync Player] Volume update:", vol);
+          changeVol(vol);
+        }
+        break;
+      case 'control':
+        console.log("[Sync Player] Control action:", data.action);
+        this.handleControl(data);
+        break;
+    }
+  }
+
+  handleControl(data) {
+    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+    const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+
+    switch (data.action) {
+      case 'toggle':
+        if (data.state === 'playing') {
+          try { activePlayer.playVideo(); } catch (e) { }
+        } else if (data.state === 'paused') {
+          try { activePlayer.pauseVideo(); } catch (e) { }
+        } else {
+          const state = activePlayer.getPlayerState();
+          if (state === YT.PlayerState.PLAYING) {
             try { activePlayer.pauseVideo(); } catch (e) { }
           } else {
-            const state = activePlayer.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
-              try { activePlayer.pauseVideo(); } catch (e) { }
-            } else {
-              try { activePlayer.playVideo(); } catch (e) { }
-            }
+            try { activePlayer.playVideo(); } catch (e) { }
           }
-          break;
-        case 'next':
-          loadNextFromPlaylist();
-          break;
-        case 'prev':
-          loadPrevFromPlaylist();
-          break;
-      }
-    } catch (error) {
-      console.error("[Player WS] Error parsing message:", error);
+        }
+        break;
+      case 'next':
+        loadNextFromPlaylist();
+        break;
+      case 'prev':
+        loadPrevFromPlaylist();
+        break;
     }
-  };
-
-  playerWs.onerror = (error) => {
-    console.error("[Player WS] ❌ Error:", error);
-  };
-
-  playerWs.onclose = (event) => {
-    console.log(`[Player WS] 🔌 Disconnected (Code: ${event.code})`);
-
-    if (playerWsReconnectTimeout) {
-      clearTimeout(playerWsReconnectTimeout);
-    }
-
-    playerWsReconnectAttempts++;
-    console.log(`[Player WS] 🔄 Reconnecting in ${playerWsCurrentReconnectDelay / 1000}s...`);
-
-    playerWsReconnectTimeout = setTimeout(() => {
-      initPlayerControlWebSocket();
-      playerWsCurrentReconnectDelay = Math.min(playerWsCurrentReconnectDelay * 2, WS_MAX_RECONNECT_INTERVAL);
-    }, playerWsCurrentReconnectDelay);
-  };
+  }
 }
 
-// Initialize the player control WebSocket connection
-initPlayerControlWebSocket();
+
+function changeVol(vol) {
+  try {
+    if (player1 && player1.getPlayerState() == YT.PlayerState.PLAYING) {
+      player1.setVolume(vol);
+    } else if (player2 && player2.getPlayerState() == YT.PlayerState.PLAYING) {
+      player2.setVolume(vol);
+    }
+    maxVol = vol;
+  } catch (e) {
+    console.error("Error setting volume:", e);
+  }
+}
+
+// Initialize player sync client
+const syncClient = new DJSyncClient('player');
+
 
 // Fetch QR code on page load
 document.addEventListener('DOMContentLoaded', fetchQRCode);
