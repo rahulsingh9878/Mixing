@@ -481,10 +481,12 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
   targetElem.style.opacity = 0;
 
   // Cue video at startSeconds (default 12s)
-  // This loads metadata and thumbnail without starting the stream until we're ready
+  // cueVideoById only supports: (videoId, startSeconds) or {videoId, startSeconds, endSeconds}
+  // Note: suggestedQuality is NOT supported by cueVideoById
   try {
-    targetPlayer.cueVideoById({ videoId: videoId, startSeconds: startSeconds, suggestedQuality: 'large' });
+    targetPlayer.cueVideoById(videoId, startSeconds);
   } catch (err) {
+    console.error("Error cueing video:", err);
     try { targetPlayer.cueVideoById(videoId); } catch (e) { }
   }
 
