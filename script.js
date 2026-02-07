@@ -507,6 +507,9 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
       try {
         targetPlayer.setVolume(0);
         targetPlayer.playVideo();
+        // Explicitly seek to startSeconds to ensure it doesn't play from 0
+        // This is necessary because some browsers reset position on playVideo()
+        targetPlayer.seekTo(startSeconds, true);
       } catch (e) { }
 
       // Wait a shorter moment to ensure buffer is ready, then fade
