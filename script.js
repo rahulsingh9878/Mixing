@@ -715,20 +715,21 @@ class DJSyncClient {
   }
 
   connect() {
-    // Determine the sync URL. In production/ngrok we might need the specific ngrok URL.
-    // However, usually we can use window.location if it's served from the same server.
-    // Given the previous code used a hardcoded ngrok for production:
-    const WS_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-      ? `ws://${window.location.hostname}:8000` // Assuming FastAPI runs on 8000 or the current port
-      : "wss://unappendaged-aretha-unwaning.ngrok-free.dev";
+    const isLocal = window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168.");
 
-    // Actually, let's try to be smart about the port if it's localhost
-    const host = window.location.port ? `${window.location.hostname}:${window.location.port}` : window.location.host;
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Ngrok Base URL
+    const WBase = "wss://unappendaged-aretha-unwaning.ngrok-free.dev";
 
-    // If we're using the separate broadcast server, we might need to stay with the hardcoded ones,
-    // but the task is to improve the socket connections to the BACKEND hub.
-    const url = `${protocol}//${host}/ws/sync?role=${this.role}`;
+    let url;
+    if (isLocal) {
+      const host = window.location.port ? `${window.location.hostname}:${window.location.port}` : window.location.host;
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      url = `${protocol}//${host}/ws/sync?role=${this.role}`;
+    } else {
+      url = `${WBase}/ws/sync?role=${this.role}`;
+    }
 
     console.log(`[Sync Player] Connecting to ${url}...`);
     this.ws = new WebSocket(url);
