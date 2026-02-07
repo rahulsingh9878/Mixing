@@ -826,7 +826,7 @@ async function getNextSong(data) {
       nextSong = videoId;
 
       // Calculate start position: use timestamp directly, with minimum of 6 seconds
-      const startPosition = Math.max(6, timestamp);
+      const startPosition = Math.max(10, timestamp);
       console.log("  Start position:", startPosition);
 
       loadIntoInactiveAndCrossfade(nextSong, startPosition);
