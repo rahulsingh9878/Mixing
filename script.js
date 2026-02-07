@@ -817,8 +817,16 @@ class DJSyncClient {
   }
 
   handleControl(data) {
-    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
+    const p1Elem = document.getElementById('player1');
+    if (!p1Elem) return;
+
+    const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
     const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+
+    if (!activePlayer || typeof activePlayer.getPlayerState !== 'function') {
+      console.warn("[Sync Player] Active player not ready for control");
+      return;
+    }
 
     switch (data.action) {
       case 'toggle':
@@ -848,10 +856,10 @@ class DJSyncClient {
 
 function changeVol(vol) {
   try {
-    if (player1 && player1.getPlayerState() == YT.PlayerState.PLAYING) {
-      player1.setVolume(vol);
-    } else if (player2 && player2.getPlayerState() == YT.PlayerState.PLAYING) {
-      player2.setVolume(vol);
+    if (player1 && typeof player1.getPlayerState === 'function' && player1.getPlayerState() == YT.PlayerState.PLAYING) {
+      if (typeof player1.setVolume === 'function') player1.setVolume(vol);
+    } else if (player2 && typeof player2.getPlayerState === 'function' && player2.getPlayerState() == YT.PlayerState.PLAYING) {
+      if (typeof player2.setVolume === 'function') player2.setVolume(vol);
     }
     maxVol = vol;
   } catch (e) {
