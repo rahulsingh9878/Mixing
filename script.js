@@ -455,6 +455,70 @@ async function loadPlaylistVideos(plId) {
 }
 
 /* ===================== Load video into inactive player ===================== */
+// function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
+//   const p1Elem = document.getElementById('player1');
+//   const p2Elem = document.getElementById('player2');
+//   const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
+//   const p2Opacity = parseFloat(window.getComputedStyle(p2Elem).opacity);
+
+//   let targetPlayer, targetElem;
+//   if (isNaN(p1Opacity) || p1Opacity === 0) {
+//     targetPlayer = player1; targetElem = p1Elem;
+//   } else if (isNaN(p2Opacity) || p2Opacity === 0) {
+//     targetPlayer = player2; targetElem = p2Elem;
+//   } else {
+//     targetPlayer = player2; targetElem = p2Elem;
+//   }
+
+//   if (!targetPlayer || typeof targetPlayer.cueVideoById !== 'function') {
+//     alert('Player is not ready yet — wait a moment and try again.');
+//     return;
+//   }
+
+//   // reset target
+//   try { targetPlayer.pauseVideo(); } catch (e) { }
+//   try { targetPlayer.setVolume(0); } catch (e) { }
+//   targetElem.style.opacity = 0;
+
+//   // Cue video at startSeconds (default 12s)
+//   // cueVideoById only supports: (videoId, startSeconds) or {videoId, startSeconds, endSeconds}
+//   // Note: suggestedQuality is NOT supported by cueVideoById
+//   try {
+//     targetPlayer.cueVideoById(videoId, startSeconds);
+//   } catch (err) {
+//     console.error("Error cueing video:", err);
+//     try { targetPlayer.cueVideoById(videoId); } catch (e) { }
+//   }
+
+//   // readiness loop: wait for CUED (5) or PLAYING (1) state
+//   let attempts = 0;
+//   console.log("Cueing track...");
+//   const readyCheck = setInterval(() => {
+//     attempts++;
+//     let state = -1;
+//     try { state = targetPlayer.getPlayerState(); } catch (e) { }
+
+//     // State 5: CUED, State 1: PLAYING (if it autoplays)
+//     if (state === 5 || state === 1 || attempts > 25) {
+//       clearInterval(readyCheck);
+//       console.log(`Track cued (state: ${state}). Priming and starting crossfade...`);
+
+//       // Prime it by playing it muted to ensure the data stream is hot for crossfade
+//       try {
+//         targetPlayer.setVolume(0);
+//         targetPlayer.playVideo();
+//         // Explicitly seek to startSeconds to ensure it doesn't play from 0
+//         // This is necessary because some browsers reset position on playVideo()
+//         targetPlayer.seekTo(startSeconds, true);
+//       } catch (e) { }
+
+//       // Wait a shorter moment to ensure buffer is ready, then fade
+//       setTimeout(() => startCrossfade(), 800);
+//     }
+//   }, 400);
+// }
+
+
 function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
   const p1Elem = document.getElementById('player1');
   const p2Elem = document.getElementById('player2');
@@ -480,17 +544,15 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
   try { targetPlayer.setVolume(0); } catch (e) { }
   targetElem.style.opacity = 0;
 
-  // Cue video at startSeconds (default 12s)
-  // cueVideoById only supports: (videoId, startSeconds) or {videoId, startSeconds, endSeconds}
-  // Note: suggestedQuality is NOT supported by cueVideoById
+  // Cue video at position 0 first
   try {
-    targetPlayer.cueVideoById(videoId, startSeconds);
+    targetPlayer.cueVideoById(videoId, 0);
   } catch (err) {
     console.error("Error cueing video:", err);
     try { targetPlayer.cueVideoById(videoId); } catch (e) { }
   }
 
-  // readiness loop: wait for CUED (5) or PLAYING (1) state
+  // Wait for video to be cued
   let attempts = 0;
   console.log("Cueing track...");
   const readyCheck = setInterval(() => {
@@ -498,25 +560,60 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
     let state = -1;
     try { state = targetPlayer.getPlayerState(); } catch (e) { }
 
-    // State 5: CUED, State 1: PLAYING (if it autoplays)
-    if (state === 5 || state === 1 || attempts > 25) {
+    // State 5: CUED
+    if (state === 5 || attempts > 25) {
       clearInterval(readyCheck);
-      console.log(`Track cued (state: ${state}). Priming and starting crossfade...`);
+      console.log(`Track cued (state: ${state}). Seeking to ${startSeconds}s...`);
 
-      // Prime it by playing it muted to ensure the data stream is hot for crossfade
+      // Custom seek logic: play briefly to enable seeking, then seek
       try {
         targetPlayer.setVolume(0);
         targetPlayer.playVideo();
-        // Explicitly seek to startSeconds to ensure it doesn't play from 0
-        // This is necessary because some browsers reset position on playVideo()
-        targetPlayer.seekTo(startSeconds, true);
       } catch (e) { }
 
-      // Wait a shorter moment to ensure buffer is ready, then fade
-      setTimeout(() => startCrossfade(), 800);
+      // Wait for playback to actually start before seeking
+      let seekAttempts = 0;
+      const seekCheck = setInterval(() => {
+        seekAttempts++;
+        let playState = -1;
+        try { playState = targetPlayer.getPlayerState(); } catch (e) { }
+
+        // State 1: PLAYING or State 3: BUFFERING means we can seek
+        if (playState === 1 || playState === 3 || seekAttempts > 15) {
+          clearInterval(seekCheck);
+          console.log(`Player started (state: ${playState}). Performing seek...`);
+
+          // Now seek to the desired position
+          try {
+            targetPlayer.seekTo(startSeconds, true);
+          } catch (e) {
+            console.error("Seek failed:", e);
+          }
+
+          // Wait for seek to complete and buffer
+          setTimeout(() => {
+            // Verify we're at the right position
+            let currentTime = 0;
+            try { currentTime = targetPlayer.getCurrentTime(); } catch (e) { }
+            console.log(`Seek complete. Current position: ${currentTime}s`);
+
+            // Ensure still muted and playing
+            try {
+              targetPlayer.setVolume(0);
+              if (targetPlayer.getPlayerState() !== 1) {
+                targetPlayer.playVideo();
+              }
+            } catch (e) { }
+
+            // Start crossfade
+            setTimeout(() => startCrossfade(), 800);
+          }, 600);
+        }
+      }, 200);
     }
   }, 400);
 }
+
 
 /* ===================== Crossfade logic ===================== */
 function startCrossfade() {
