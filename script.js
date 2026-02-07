@@ -824,10 +824,12 @@ async function getNextSong(data) {
       hasLoadedNext = true;
       console.log("  Calling:", "True");
       nextSong = videoId;
-      if (timestamp > 4) {
-        timestamp -= 4;
-      }
-      loadIntoInactiveAndCrossfade(nextSong, timestamp - 4);
+
+      // Calculate start position: use timestamp directly, with minimum of 6 seconds
+      const startPosition = Math.max(6, timestamp);
+      console.log("  Start position:", startPosition);
+
+      loadIntoInactiveAndCrossfade(nextSong, startPosition);
       setTimeout(() => {
         hasLoadedNext = false;
       }, 10000);
