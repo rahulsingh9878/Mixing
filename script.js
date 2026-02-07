@@ -539,6 +539,10 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
     return;
   }
 
+  // Sanitize startSeconds - ensure it's a valid positive number
+  startSeconds = Math.max(0, parseFloat(startSeconds) || 0);
+  console.log(`Sanitized start time: ${startSeconds}s`);
+
   // reset target
   try { targetPlayer.pauseVideo(); } catch (e) { }
   try { targetPlayer.setVolume(0); } catch (e) { }
@@ -581,23 +585,38 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
         // State 1: PLAYING or State 3: BUFFERING means we can seek
         if (playState === 1 || playState === 3 || seekAttempts > 15) {
           clearInterval(seekCheck);
-          console.log(`Player started (state: ${playState}). Performing seek...`);
+          console.log(`Player started (state: ${playState}). Performing seek to ${startSeconds}s...`);
 
-          // Now seek to the desired position
-          try {
-            targetPlayer.seekTo(startSeconds, true);
-          } catch (e) {
-            console.error("Seek failed:", e);
-          }
+          // Only seek if startSeconds > 0, otherwise we're already at the start
+          if (startSeconds > 0) {
+            try {
+              targetPlayer.seekTo(startSeconds, true);
+            } catch (e) {
+              console.error("Seek failed:", e);
+            }
 
-          // Wait for seek to complete and buffer
-          setTimeout(() => {
-            // Verify we're at the right position
-            let currentTime = 0;
-            try { currentTime = targetPlayer.getCurrentTime(); } catch (e) { }
-            console.log(`Seek complete. Current position: ${currentTime}s`);
+            // Wait for seek to complete and buffer
+            setTimeout(() => {
+              // Verify we're at the right position
+              let currentTime = 0;
+              try { currentTime = targetPlayer.getCurrentTime(); } catch (e) { }
+              console.log(`Seek complete. Current position: ${currentTime}s (target: ${startSeconds}s)`);
 
-            // Ensure still muted and playing
+              // Ensure still muted and playing
+              try {
+                targetPlayer.setVolume(0);
+                if (targetPlayer.getPlayerState() !== 1) {
+                  targetPlayer.playVideo();
+                }
+              } catch (e) { }
+
+              // Start crossfade
+              setTimeout(() => startCrossfade(), 800);
+            }, 600);
+          } else {
+            // No seek needed, already at start
+            console.log(`Starting from beginning (0s)`);
+
             try {
               targetPlayer.setVolume(0);
               if (targetPlayer.getPlayerState() !== 1) {
@@ -607,7 +626,7 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
 
             // Start crossfade
             setTimeout(() => startCrossfade(), 800);
-          }, 600);
+          }
         }
       }, 200);
     }
