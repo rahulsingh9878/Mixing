@@ -61,6 +61,7 @@ document.addEventListener('keydown', function (event) {
 let player1 = null, player2 = null;
 let fadeInterval = null;
 let direction = true; // true: p1 fades OUT -> p2 fades IN ; next click toggles
+let videoId = null, timestamp = null; // New declarations to avoid implicit globals
 
 const defaultVideo1 = "4rJ9z6IXnb8";
 const defaultVideo2 = "p2EdDiiVHh4";
@@ -341,6 +342,13 @@ async function refreshPlaylistCheck() {
 
 /* ===================== Player state change handler ===================== */
 function onPlayerStateChange(event) {
+  // Broadcast state to controllers
+  if (event.data === YT.PlayerState.PLAYING) {
+    syncClient.send('control', { action: 'stateChange', state: 'playing' });
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    syncClient.send('control', { action: 'stateChange', state: 'paused' });
+  }
+
   // When video starts playing in playlist mode, start monitoring
   if (event.data === 1 && playlistMode) {
     startPlaylistMonitoring();
