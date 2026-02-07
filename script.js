@@ -470,7 +470,7 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
     targetPlayer = player2; targetElem = p2Elem;
   }
 
-  if (!targetPlayer || typeof targetPlayer.loadVideoById !== 'function') {
+  if (!targetPlayer || typeof targetPlayer.cueVideoById !== 'function') {
     alert('Player is not ready yet — wait a moment and try again.');
     return;
   }
@@ -480,27 +480,35 @@ function loadIntoInactiveAndCrossfade(videoId, startSeconds = 12) {
   try { targetPlayer.setVolume(0); } catch (e) { }
   targetElem.style.opacity = 0;
 
-  // load video at 12s
+  // Cue video at startSeconds (default 12s)
+  // This loads metadata and thumbnail without starting the stream until we're ready
   try {
-    targetPlayer.loadVideoById({ videoId: videoId, startSeconds: startSeconds, suggestedQuality: 'large' });
+    targetPlayer.cueVideoById({ videoId: videoId, startSeconds: startSeconds, suggestedQuality: 'large' });
   } catch (err) {
-    try { targetPlayer.loadVideoById(videoId); } catch (e) { }
+    try { targetPlayer.cueVideoById(videoId); } catch (e) { }
   }
 
-  // readiness loop, then play muted and after 3s start crossfade
+  // readiness loop: wait for CUED (5) or PLAYING (1) state
   let attempts = 0;
-  console.log("Playing...");
+  console.log("Cueing track...");
   const readyCheck = setInterval(() => {
     attempts++;
     let state = -1;
-    if (attempts > 3) console.log(attempts);
     try { state = targetPlayer.getPlayerState(); } catch (e) { }
-    if (state === YT.PlayerState.PLAYING || attempts > 20) {
+
+    // State 5: CUED, State 1: PLAYING (if it autoplays)
+    if (state === 5 || state === 1 || attempts > 25) {
       clearInterval(readyCheck);
-      try { targetPlayer.setVolume(0); } catch (e) { }
-      try { targetPlayer.playVideo(); } catch (e) { }
-      // wait 3 seconds then crossfade
-      setTimeout(() => startCrossfade(), 1000);
+      console.log(`Track cued (state: ${state}). Priming and starting crossfade...`);
+
+      // Prime it by playing it muted to ensure the data stream is hot for crossfade
+      try {
+        targetPlayer.setVolume(0);
+        targetPlayer.playVideo();
+      } catch (e) { }
+
+      // Wait a shorter moment to ensure buffer is ready, then fade
+      setTimeout(() => startCrossfade(), 800);
     }
   }, 400);
 }
