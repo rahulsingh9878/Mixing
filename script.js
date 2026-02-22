@@ -933,11 +933,11 @@ function changeVol(vol) {
     maxVol = vol;
     if (player1 && typeof player1.setVolume === 'function') {
       player1.setVolume(vol);
-      if (vol > 0) player1.unmute();
+      if (vol > 0 && typeof player1.unmute === 'function') player1.unmute();
     }
     if (player2 && typeof player2.setVolume === 'function') {
       player2.setVolume(vol);
-      if (vol > 0) player2.unmute();
+      if (vol > 0 && typeof player2.unmute === 'function') player2.unmute();
     }
 
     // Auto-unmute state sync
@@ -953,11 +953,13 @@ function changeVol(vol) {
 
 function applyMute(muted) {
   try {
-    if (player1 && typeof player1.mute === 'function') {
-      muted ? player1.mute() : player1.unmute();
+    if (player1) {
+      if (muted && typeof player1.mute === 'function') player1.mute();
+      else if (!muted && typeof player1.unmute === 'function') player1.unmute();
     }
-    if (player2 && typeof player2.mute === 'function') {
-      muted ? player2.mute() : player2.unmute();
+    if (player2) {
+      if (muted && typeof player2.mute === 'function') player2.mute();
+      else if (!muted && typeof player2.unmute === 'function') player2.unmute();
     }
 
     const muteIndicator = document.getElementById('muteIndicator');
