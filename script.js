@@ -931,10 +931,16 @@ class DJSyncClient {
 function changeVol(vol) {
   try {
     maxVol = vol;
-    if (player1 && typeof player1.setVolume === 'function') player1.setVolume(vol);
-    if (player2 && typeof player2.setVolume === 'function') player2.setVolume(vol);
+    if (player1 && typeof player1.setVolume === 'function') {
+      player1.setVolume(vol);
+      if (vol > 0) player1.unmute();
+    }
+    if (player2 && typeof player2.setVolume === 'function') {
+      player2.setVolume(vol);
+      if (vol > 0) player2.unmute();
+    }
 
-    // Auto-unmute if volume is increased
+    // Auto-unmute state sync
     if (vol > 0 && isMuted) {
       isMuted = false;
       applyMute(false);
