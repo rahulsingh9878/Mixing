@@ -75,6 +75,7 @@ let playlistRefreshInterval = null;
 let hasLoadedNext = false;
 let nextSong = "p2EdDiiVHh4";
 let maxVol = 100;
+let isMuted = false;
 
 /* ===================== Utils ===================== */
 function extractVideoID(text) {
@@ -880,6 +881,12 @@ class DJSyncClient {
         console.log("[Sync Player] Control action:", data.action);
         this.handleControl(data);
         break;
+      case 'mute':
+        if (data && 'isMuted' in data) {
+          isMuted = data.isMuted;
+          applyMute(isMuted);
+        }
+        break;
     }
   }
 
@@ -923,15 +930,43 @@ class DJSyncClient {
 
 function changeVol(vol) {
   try {
-    if (player1 && typeof player1.getPlayerState === 'function' && player1.getPlayerState() == YT.PlayerState.PLAYING) {
-      if (typeof player1.setVolume === 'function') player1.setVolume(vol);
-    } else if (player2 && typeof player2.getPlayerState === 'function' && player2.getPlayerState() == YT.PlayerState.PLAYING) {
-      if (typeof player2.setVolume === 'function') player2.setVolume(vol);
-    }
     maxVol = vol;
+    if (player1 && typeof player1.setVolume === 'function') player1.setVolume(vol);
+    if (player2 && typeof player2.setVolume === 'function') player2.setVolume(vol);
+
+    // Auto-unmute if volume is increased
+    if (vol > 0 && isMuted) {
+      isMuted = false;
+      applyMute(false);
+      syncClient.send('mute', { isMuted: false });
+    }
   } catch (e) {
     console.error("Error setting volume:", e);
   }
+}
+
+function applyMute(muted) {
+  try {
+    if (player1 && typeof player1.mute === 'function') {
+      muted ? player1.mute() : player1.unmute();
+    }
+    if (player2 && typeof player2.mute === 'function') {
+      muted ? player2.mute() : player2.unmute();
+    }
+
+    const muteIndicator = document.getElementById('muteIndicator');
+    if (muteIndicator) {
+      muteIndicator.style.display = muted ? 'flex' : 'none';
+    }
+  } catch (e) {
+    console.error("Error applying mute:", e);
+  }
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  applyMute(isMuted);
+  syncClient.send('mute', { isMuted: isMuted });
 }
 
 // Initialize player sync client
@@ -1015,6 +1050,10 @@ document.addEventListener('keydown', (event) => {
 
   if (event.key === 'Escape' && qrVisible) {
     toggleQROverlay();
+  }
+
+  if ((event.key === 'm' || event.key === 'M') && document.activeElement.tagName !== 'INPUT') {
+    toggleMute();
   }
 });
 
