@@ -801,6 +801,7 @@ class DJSyncClient {
     let url;
     if (isLocal) {
       const host = window.location.port ? `${window.location.hostname}:${window.location.port}` : window.location.host;
+      // const host = "localhost:8045";
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       url = `${protocol}//${host}/ws/sync?role=${this.role}`;
     } else {
@@ -933,11 +934,11 @@ function changeVol(vol) {
     maxVol = vol;
     if (player1 && typeof player1.setVolume === 'function') {
       player1.setVolume(vol);
-      if (vol > 0 && typeof player1.unmute === 'function') player1.unmute();
+      if (vol > 0 && typeof player1.unMute === 'function') player1.unMute();
     }
     if (player2 && typeof player2.setVolume === 'function') {
       player2.setVolume(vol);
-      if (vol > 0 && typeof player2.unmute === 'function') player2.unmute();
+      if (vol > 0 && typeof player2.unMute === 'function') player2.unMute();
     }
 
     // Auto-unmute state sync
@@ -955,11 +956,13 @@ function applyMute(muted) {
   try {
     if (player1) {
       if (muted && typeof player1.mute === 'function') player1.mute();
-      else if (!muted && typeof player1.unmute === 'function') player1.unmute();
+      else if (!muted && typeof player1.unMute === 'function') player1.unMute();
+      else console.log("Player 1 mute state:", muted);
     }
     if (player2) {
       if (muted && typeof player2.mute === 'function') player2.mute();
-      else if (!muted && typeof player2.unmute === 'function') player2.unmute();
+      else if (!muted && typeof player2.unMute === 'function') player2.unMute();
+      else console.log("Player 2 mute state:", muted);
     }
 
     const muteIndicator = document.getElementById('muteIndicator');
