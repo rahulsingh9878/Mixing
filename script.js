@@ -102,6 +102,20 @@ function extractPlaylistID(text) {
   return "";
 }
 
+/* ===================== Player Utils ===================== */
+function getActivePlayer() {
+  const p1Elem = document.getElementById('player1');
+  if (!p1Elem) return null;
+  const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
+  return p1Opacity > 0.5 ? player1 : player2;
+}
+
+function getInactivePlayer() {
+  const active = getActivePlayer();
+  if (!active) return null;
+  return active === player1 ? player2 : player1;
+}
+
 function updateOverlayInfo() {
   const overlayEl = document.querySelector('.overlay-info');
   const modeEl = document.querySelector('.overlay-info .mode');
@@ -213,8 +227,7 @@ function startPlaylistMonitoring() {
     }
 
     // Get the currently playing player
-    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-    const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+    const activePlayer = getActivePlayer();
 
     try {
       const currentTime = activePlayer.getCurrentTime();
@@ -274,8 +287,7 @@ async function refreshPlaylistCheck() {
 
   try {
     // Use the inactive player to fetch updated playlist
-    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-    const checkPlayer = p1Opacity > 0.5 ? player2 : player1;
+    const checkPlayer = getInactivePlayer();
 
     // Temporarily load playlist to check
     checkPlayer.loadPlaylist({
@@ -840,7 +852,26 @@ class DJSyncClient {
   startHeartbeat() {
     this.pingInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.send('ping', { ts: Date.now() });
+        let playbackInfo = { ts: Date.now() };
+
+        // If we are a player, include current playback state
+        if (this.role === 'player') {
+          try {
+            const activePlayer = getActivePlayer();
+            if (activePlayer) {
+              if (activePlayer && typeof activePlayer.getCurrentTime === 'function') {
+                playbackInfo.currentTime = activePlayer.getCurrentTime();
+                playbackInfo.videoId = activePlayer.getVideoData ? activePlayer.getVideoData().video_id : null;
+                playbackInfo.state = activePlayer.getPlayerState ? activePlayer.getPlayerState() : -1;
+                console.log(`[Sync Player] Heartbeat - Video: ${playbackInfo.videoId} | Time: ${playbackInfo.currentTime.toFixed(2)}s`);
+              }
+            }
+          } catch (e) {
+            console.error("[Sync Player] Heartbeat playback info error:", e);
+          }
+        }
+
+        this.send('ping', playbackInfo);
       }
     }, 10000);
   }
@@ -892,11 +923,7 @@ class DJSyncClient {
   }
 
   handleControl(data) {
-    const p1Elem = document.getElementById('player1');
-    if (!p1Elem) return;
-
-    const p1Opacity = parseFloat(window.getComputedStyle(p1Elem).opacity);
-    const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+    const activePlayer = getActivePlayer();
 
     if (!activePlayer || typeof activePlayer.getPlayerState !== 'function') {
       console.warn("[Sync Player] Active player not ready for control");
@@ -1042,12 +1069,9 @@ function toggleQROverlay() {
       if (!qrVisible) overlay.style.display = 'none';
     }, 400);
 
-    // Resume the player that should be active based on opacity
-    const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-    if (p1Opacity > 0.5) {
-      try { if (player1 && player1.playVideo) player1.playVideo(); } catch (e) { }
-    } else {
-      try { if (player2 && player2.playVideo) player2.playVideo(); } catch (e) { }
+    const activePlayer = getActivePlayer();
+    if (activePlayer && activePlayer.playVideo) {
+      try { activePlayer.playVideo(); } catch (e) { }
     }
   }
 }
@@ -1076,8 +1100,8 @@ window.addEventListener('tv-show-qr', () => {
   toggleQROverlay();
 });
 window.addEventListener('tv-play-pause', () => {
-  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  const activePlayer = getActivePlayer();
+  if (!activePlayer) return;
   const state = activePlayer.getPlayerState();
   if (state === YT.PlayerState.PLAYING) {
     try { activePlayer.pauseVideo(); } catch (e) { }
@@ -1086,13 +1110,13 @@ window.addEventListener('tv-play-pause', () => {
   }
 });
 window.addEventListener('tv-play', () => {
-  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  const activePlayer = getActivePlayer();
+  if (!activePlayer) return;
   try { activePlayer.playVideo(); } catch (e) { }
 });
 window.addEventListener('tv-pause', () => {
-  const p1Opacity = parseFloat(window.getComputedStyle(document.getElementById('player1')).opacity);
-  const activePlayer = p1Opacity > 0.5 ? player1 : player2;
+  const activePlayer = getActivePlayer();
+  if (!activePlayer) return;
   try { activePlayer.pauseVideo(); } catch (e) { }
 });
 window.addEventListener('tv-next', () => {
