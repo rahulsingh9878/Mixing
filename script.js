@@ -861,9 +861,10 @@ class DJSyncClient {
             if (activePlayer) {
               if (activePlayer && typeof activePlayer.getCurrentTime === 'function') {
                 playbackInfo.currentTime = activePlayer.getCurrentTime();
+                playbackInfo.duration = activePlayer.getDuration ? activePlayer.getDuration() : 0;
                 playbackInfo.videoId = activePlayer.getVideoData ? activePlayer.getVideoData().video_id : null;
                 playbackInfo.state = activePlayer.getPlayerState ? activePlayer.getPlayerState() : -1;
-                console.log(`[Sync Player] Heartbeat - Video: ${playbackInfo.videoId} | Time: ${playbackInfo.currentTime.toFixed(2)}s`);
+                console.log(`[Sync Player] Heartbeat - Video: ${playbackInfo.videoId} | Time: ${playbackInfo.currentTime.toFixed(2)}s / ${playbackInfo.duration.toFixed(2)}s`);
               }
             }
           } catch (e) {
