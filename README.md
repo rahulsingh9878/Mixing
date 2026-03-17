@@ -68,12 +68,34 @@ Paste the contents of `Eq.js` into your browser's DevTools console while the pla
 ```
 Browser (index.html + script.js)
     │
+    ├── CONFIG (frozen constants — all magic numbers/URLs in one place)
+    │
     ├── YouTube IFrame API  ← two overlaid players (player1 / player2)
+    │       safeCall(player, method, ...args)  — safe wrapper, suppresses IFrame errors
+    │       forBothPlayers(method, ...args)    — apply to both players at once
+    │       pollUntil(condFn, intervalMs, max) — async polling for player state
+    │
+    ├── playlist {}  — consolidated playlist state object
+    │       (replaces scattered playlistMode / currentPlaylist / hasLoadedNext vars)
     │
     └── DJSyncClient (WebSocket)
-            │
             ├── Local:  ws://localhost:<port>/ws/sync?role=player
             └── Remote: wss://<ngrok-url>/ws/sync?role=player
 ```
 
 The sync client auto-detects local vs. remote and reconnects with exponential backoff. It sends heartbeats every 10 seconds with current playback state (video ID, timestamp, duration, player state).
+
+### Eq.js panel architecture
+
+```
+buildSpeedSection()  → { section, reset }
+buildVolumeSection() → { section, reset }
+buildEchoSection()   → { section, reset }
+buildReverbSection() → { section, reset }
+buildEQSection()     → { section, reset }
+         ↑
+makeSliderRow({ labelText, min, max, format, onUpdate })
+         — single factory used by all sliders; handles input, dblclick-reset, and label updates
+```
+
+`resetAllBtn.onclick` calls each section's `reset()` — no logic duplication between individual and global reset.
