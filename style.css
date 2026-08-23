@@ -255,6 +255,40 @@ input:focus {
   text-transform: uppercase;
 }
 
+.room-code {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.room-code-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 6px;
+}
+
+.room-code-value {
+  display: block;
+  font-family: 'Courier New', monospace;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: #6effff;
+  text-shadow: 0 0 20px rgba(110, 255, 255, 0.3);
+}
+
+.room-code-members {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
 /* Hide cursor on inactivity */
 body.hide-cursor {
   cursor: none !important;

@@ -48,6 +48,11 @@
       <div class="qr-container">
         <img id="qrImage" src="" alt="QR Code" />
         <p>Scan to Request Songs</p>
+        <div class="room-code" id="roomCode">
+          <span class="room-code-label">Room Code</span>
+          <span class="room-code-value" id="roomCodeValue">— — — — — —</span>
+          <span class="room-code-members" id="roomCodeMembers"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -57,6 +62,8 @@
 
   <!-- ---------- Single-file JS: utils, players, UI, crossfade, main ---------- -->
   <script src="script.js"></script>
+  <!-- ---------- Host-only /ws/room client (room code display) ---------- -->
+  <script src="room.js"></script>
 </body>
 
 </html>

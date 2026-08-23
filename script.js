@@ -16,6 +16,8 @@ const CONFIG = Object.freeze({
   QR_FADE_MS:                    400,
   WS_BASE_DELAY_MS:              3000,
   WS_MAX_DELAY_MS:               30000,
+  ROOM_PING_INTERVAL_MS:         30000,
+  ROOM_NAME:        'PMX Video DJ Session',
   NGROK_WS_URL:     'wss://unappendaged-aretha-unwaning.ngrok-free.dev',
   QR_LOCAL_URL:     'http://0.0.0.0:8045/qr/',
   QR_REMOTE_URL:    'https://unappendaged-aretha-unwaning.ngrok-free.dev/qr/',
@@ -57,6 +59,17 @@ function pollUntil(conditionFn, intervalMs, maxAttempts) {
       }
     }, intervalMs);
   });
+}
+
+/** Build a ws(s):// URL for `path`, auto-detecting local vs. remote (ngrok) host. */
+function resolveWsUrl(path, query = '') {
+  const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    || window.location.hostname.startsWith('192.168.');
+
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const base = isLocal ? `${protocol}//${window.location.host}` : CONFIG.NGROK_WS_URL;
+
+  return `${base}${path}${query ? `?${query}` : ''}`;
 }
 
 function extractVideoID(text) {
@@ -529,13 +542,7 @@ class DJSyncClient {
   }
 
   connect() {
-    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-      || window.location.hostname.startsWith('192.168.');
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = isLocal
-      ? `${protocol}//${window.location.host}/ws/sync?role=${this.role}`
-      : `${CONFIG.NGROK_WS_URL}/ws/sync?role=${this.role}`;
+    const url = resolveWsUrl('/ws/sync', `role=${this.role}`);
 
     console.log(`[Sync] Connecting to ${url}`);
     this.ws = new WebSocket(url);
