@@ -208,11 +208,11 @@ function onYouTubeIframeAPIReady() {
 function onPlayerStateChange(event) {
   switch (event.data) {
     case YT.PlayerState.PLAYING:
-      syncClient.send('control', { action: 'stateChange', state: 'playing' });
+      syncClient?.send('control', { action: 'stateChange', state: 'playing' });
       if (playlist.active) startPlaylistMonitoring();
       break;
     case YT.PlayerState.PAUSED:
-      syncClient.send('control', { action: 'stateChange', state: 'paused' });
+      syncClient?.send('control', { action: 'stateChange', state: 'paused' });
       break;
     case YT.PlayerState.ENDED:
       if (playlist.active && playlist.items.length > 0) {
@@ -491,7 +491,7 @@ function changeVol(vol) {
     if (vol > 0 && isMuted) {
       isMuted = false;
       applyMute(false);
-      syncClient.send('mute', { isMuted: false });
+      syncClient?.send('mute', { isMuted: false });
     }
   } catch (e) {
     console.error('[PMX] Volume error:', e);
@@ -511,7 +511,7 @@ function applyMute(muted) {
 function toggleMute() {
   isMuted = !isMuted;
   applyMute(isMuted);
-  syncClient.send('mute', { isMuted });
+  syncClient?.send('mute', { isMuted });
 }
 
 /* ===================== Song Request Handler ===================== */
@@ -533,23 +533,39 @@ async function getNextSong(data) {
 
 /* ===================== Sync Client ===================== */
 class DJSyncClient {
-  constructor(role = 'player') {
+  constructor(role = 'player', roomId = null) {
     this.role              = role;
+    this.roomId            = roomId;
     this.ws                = null;
     this.reconnectAttempts = 0;
     this.pingInterval      = null;
+    this.dead              = false; // true once the room is gone — stop retrying
     this.connect();
   }
 
   connect() {
-    const url = resolveWsUrl('/ws/sync', `role=${this.role}`);
+    const query = `role=${this.role}` + (this.roomId ? `&room_id=${this.roomId}` : '');
+    const url   = resolveWsUrl('/ws/sync', query);
 
     console.log(`[Sync] Connecting to ${url}`);
     this.ws = new WebSocket(url);
 
     this.ws.onopen    = () => { console.log('[Sync] Connected'); this.reconnectAttempts = 0; this.startHeartbeat(); };
     this.ws.onmessage = (e) => { try { this.handleMessage(JSON.parse(e.data)); } catch (err) { console.error('[Sync] Parse error:', err); } };
-    this.ws.onclose   = () => { console.log('[Sync] Disconnected'); this.stopHeartbeat(); this.retry(); };
+    this.ws.onclose   = (event) => {
+      this.stopHeartbeat();
+
+      if (event.code === 4001) {
+        console.warn('[Sync] Room not found — waiting for a new room');
+        this.dead = true;
+        notifyRoomSessionEnded('Room not found');
+        return;
+      }
+
+      console.log('[Sync] Disconnected');
+      if (this.dead) return; // closed intentionally (room_closed / superseded) — don't retry
+      this.retry();
+    };
     this.ws.onerror   = (err) => { console.error('[Sync] Error:', err); };
   }
 
@@ -614,6 +630,13 @@ class DJSyncClient {
           applyMute(isMuted);
         }
         break;
+      case 'room_closed':
+        console.warn(`[Sync] Room closed (${data?.reason}) — session ended`);
+        this.dead = true;
+        this.stopHeartbeat();
+        try { this.ws.close(); } catch (_) { /* already closing */ }
+        notifyRoomSessionEnded('Host ended the session');
+        break;
     }
   }
 
@@ -642,7 +665,31 @@ class DJSyncClient {
   }
 }
 
-const syncClient = new DJSyncClient('player');
+/**
+ * The player's /ws/sync connection is room-scoped and therefore doesn't
+ * exist until a room is available. `room.js`'s RoomClient owns the room
+ * lifecycle and drives these two entry points.
+ */
+let syncClient = null;
+
+function startPlayerSync(roomId) {
+  stopPlayerSync();
+  syncClient = new DJSyncClient('player', roomId);
+}
+
+function stopPlayerSync() {
+  if (!syncClient) return;
+  syncClient.dead = true;
+  syncClient.stopHeartbeat();
+  try { syncClient.ws?.close(); } catch (_) { /* already closing */ }
+  syncClient = null;
+}
+
+function notifyRoomSessionEnded(reason) {
+  console.warn(`[Sync] ${reason}`);
+  forBothPlayers('pauseVideo');
+  if (typeof updateRoomCodeUI === 'function') updateRoomCodeUI(null, reason);
+}
 
 /* ===================== QR Code ===================== */
 const QR_API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)

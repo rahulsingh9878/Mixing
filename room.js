@@ -2,15 +2,19 @@
  * PMX Video DJ — room.js
  *
  * Host-only client for the /ws/room API (see BackEnd/docs/ws-room-api.md).
- * This TV app always plays the "host" role: it creates a room on load so
- * guests can later join it by code. It never browses or joins other rooms.
+ * This TV app plays two roles on one page: it creates the room (host, via
+ * RoomClient below) and then plays inside that same room (via the
+ * room-scoped DJSyncClient in script.js). It never browses or joins other
+ * rooms — that belongs to the guest/controller webapp.
  *
- * Note: room membership does not (yet) scope /ws/sync playback traffic —
- * this only makes the room exist and its code visible.
+ * Each time RoomClient obtains a room id, it hands it to script.js's
+ * startPlayerSync() to (re)open the room-scoped /ws/sync connection. When
+ * the room goes away, it calls stopPlayerSync() so playback doesn't keep
+ * talking to a dead room.
  * ===================================================================== */
 
 /* ===================== Room Code UI ===================== */
-function updateRoomCodeUI(room) {
+function updateRoomCodeUI(room, statusOverride) {
   const valueEl   = document.getElementById('roomCodeValue');
   const membersEl = document.getElementById('roomCodeMembers');
   if (!valueEl || !membersEl) return;
@@ -20,7 +24,7 @@ function updateRoomCodeUI(room) {
     membersEl.textContent = `${room.member_count} connected`;
   } else {
     valueEl.textContent   = '— — — — — —';
-    membersEl.textContent = 'Connecting…';
+    membersEl.textContent = statusOverride || 'Connecting…';
   }
 }
 
@@ -55,6 +59,7 @@ class RoomClient {
       this.stopHeartbeat();
       this.room = null;
       updateRoomCodeUI(null);
+      stopPlayerSync();
       this.retry();
     };
     this.ws.onerror = (err) => { console.error('[Room] Error:', err); };
@@ -92,6 +97,7 @@ class RoomClient {
         this.room = data;
         console.log(`[Room] Created id=${data.id} name="${data.name}"`);
         updateRoomCodeUI(this.room);
+        startPlayerSync(this.room.id);
         break;
 
       case 'member_joined':
@@ -106,6 +112,7 @@ class RoomClient {
         console.warn(`[Room] Closed: ${data.reason}`);
         this.room = null;
         updateRoomCodeUI(null);
+        stopPlayerSync();
         break;
 
       case 'error':
