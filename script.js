@@ -9,7 +9,7 @@ const CONFIG = Object.freeze({
   PLAYLIST_REFRESH_INTERVAL_MS:  2000,
   CROSSFADE_LOCK_MS:             15000,
   OVERLAY_DISPLAY_MS:            2000,
-  HEARTBEAT_INTERVAL_MS:         10000,
+  HEARTBEAT_INTERVAL_MS:         5000,
   DEFAULT_START_SECONDS:         12,
   MIN_START_SECONDS:             10,
   CURSOR_HIDE_MS:                5000,
@@ -635,7 +635,7 @@ class DJSyncClient {
         this.dead = true;
         this.stopHeartbeat();
         try { this.ws.close(); } catch (_) { /* already closing */ }
-        notifyRoomSessionEnded('Host ended the session');
+        notifyRoomSessionEnded('Session ended — scan a new code');
         break;
     }
   }
