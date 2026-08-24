@@ -16,6 +16,7 @@ const CONFIG = Object.freeze({
   QR_FADE_MS:                    400,
   WS_BASE_DELAY_MS:              3000,
   WS_MAX_DELAY_MS:               30000,
+  SEEK_DEBOUNCE_MS:              1000,
   ROOM_PING_INTERVAL_MS:         30000,
   ROOM_NAME:        'PMX Video DJ Session',
   NGROK_WS_URL:     'wss://unappendaged-aretha-unwaning.ngrok-free.dev',
@@ -550,6 +551,8 @@ class DJSyncClient {
     this.reconnectAttempts = 0;
     this.pingInterval      = null;
     this.dead              = false; // true once the room is gone — stop retrying
+    this.seekDebounceTimer = null;
+    this.pendingSeekTo     = null;
     this.connect();
   }
 
@@ -671,7 +674,33 @@ class DJSyncClient {
       }
       case 'next': loadNextFromPlaylist(); break;
       case 'prev': loadPrevFromPlaylist(); break;
+      case 'seek': this.handleSeek(data.seekTo); break;
     }
+  }
+
+  /**
+   * Debounced seek: a controller may send several `seek` messages in quick
+   * succession (e.g. dragging a scrub bar). Only act once messages stop
+   * arriving for SEEK_DEBOUNCE_MS, using the last value received.
+   */
+  handleSeek(seekTo) {
+    const seconds = parseFloat(seekTo);
+    if (isNaN(seconds)) return;
+
+    this.pendingSeekTo = seconds;
+    clearTimeout(this.seekDebounceTimer);
+    this.seekDebounceTimer = setTimeout(() => {
+      this.seekDebounceTimer = null;
+
+      const active = getActivePlayer();
+      if (!active || typeof active.seekTo !== 'function') {
+        console.warn('[Sync] Active player not ready for seek');
+        return;
+      }
+
+      safeCall(active, 'seekTo', this.pendingSeekTo, true);
+      console.log(`[Sync] Seeked to ${this.pendingSeekTo}s`);
+    }, CONFIG.SEEK_DEBOUNCE_MS);
   }
 }
 
