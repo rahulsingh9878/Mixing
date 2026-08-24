@@ -139,6 +139,13 @@ function getPlayerElement(player) {
   return document.getElementById(player === player1 ? 'player1' : 'player2');
 }
 
+/** Identify which deck a YT.Player instance is ('player1' / 'player2'), or null if neither. */
+function getPlayerId(player) {
+  if (player === player1) return 'player1';
+  if (player === player2) return 'player2';
+  return null;
+}
+
 /* ===================== Notification Dot ===================== */
 let _notificationEl = null;
 
@@ -206,13 +213,16 @@ function onYouTubeIframeAPIReady() {
 
 /* ===================== Player State Handler ===================== */
 function onPlayerStateChange(event) {
+  const player   = getPlayerId(event.target);
+  const videoId  = safeCall(event.target, 'getVideoData')?.video_id ?? null;
+
   switch (event.data) {
     case YT.PlayerState.PLAYING:
-      syncClient?.send('control', { action: 'stateChange', state: 'playing' });
+      syncClient?.send('control', { action: 'stateChange', state: 'playing', player, videoId });
       if (playlist.active) startPlaylistMonitoring();
       break;
     case YT.PlayerState.PAUSED:
-      syncClient?.send('control', { action: 'stateChange', state: 'paused' });
+      syncClient?.send('control', { action: 'stateChange', state: 'paused', player, videoId });
       break;
     case YT.PlayerState.ENDED:
       if (playlist.active && playlist.items.length > 0) {
