@@ -196,7 +196,7 @@ function onYouTubeIframeAPIReady() {
     showinfo:        0,
     modestbranding:  1,
     enablejsapi:     1,
-    origin:          window.location.origin || 'http://localhost',
+    origin:          "http://localhost",
   };
 
   player1 = new YT.Player('player1', {
