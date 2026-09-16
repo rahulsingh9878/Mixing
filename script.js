@@ -68,7 +68,7 @@ function resolveWsUrl(path, query = '') {
     || window.location.hostname.startsWith('192.168.');
 
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const base = isLocal ? `${protocol}//${window.location.host}` : CONFIG.NGROK_WS_URL;
+  const base = isLocal ? `${protocol}//192.168.1.20:8045` : CONFIG.NGROK_WS_URL;
 
   return `${base}${path}${query ? `?${query}` : ''}`;
 }
@@ -196,20 +196,36 @@ function onYouTubeIframeAPIReady() {
     showinfo:        0,
     modestbranding:  1,
     enablejsapi:     1,
-    origin:          "http://localhost",
+    origin:          window.location.origin,
+    vq:              'hd1080',
   };
 
   player1 = new YT.Player('player1', {
     videoId:     CONFIG.DEFAULT_VIDEO_1,
     playerVars:  { ...sharedVars, autoplay: 1, start: 12, mute: 0 },
-    events:      { onStateChange: onPlayerStateChange },
+    events:      { onReady: forceMaxQuality, onStateChange: onPlayerStateChange },
   });
 
   player2 = new YT.Player('player2', {
     videoId:     CONFIG.DEFAULT_VIDEO_2,
     playerVars:  { ...sharedVars, autoplay: 0, start: 12 },
-    events:      { onStateChange: onPlayerStateChange },
+    events:      { onReady: forceMaxQuality, onStateChange: onPlayerStateChange },
   });
+}
+
+/** Force the highest available quality on each player */
+function forceMaxQuality(event) {
+  var p = event.target;
+  try {
+    var levels = p.getAvailableQualityLevels();
+    if (levels && levels.length > 0) {
+      p.setPlaybackQuality(levels[0]);
+    } else {
+      p.setPlaybackQuality("hd1080");
+    }
+  } catch(e) {
+    p.setPlaybackQuality("hd1080");
+  }
 }
 
 /* ===================== Player State Handler ===================== */
@@ -219,6 +235,7 @@ function onPlayerStateChange(event) {
 
   switch (event.data) {
     case YT.PlayerState.PLAYING:
+      forceMaxQuality(event);
       syncClient?.send('control', { action: 'stateChange', state: 'playing', player, videoId });
       if (playlist.active) startPlaylistMonitoring();
       break;
@@ -731,9 +748,8 @@ function notifyRoomSessionEnded(reason) {
 }
 
 /* ===================== QR Code ===================== */
-const QR_API_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
-  ? CONFIG.QR_LOCAL_URL
-  : CONFIG.QR_REMOTE_URL;
+const isHostLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname) || window.location.hostname.startsWith('192.168.');
+const QR_API_URL = isHostLocal ? window.location.protocol + '//192.168.1.20:8045/qr/' : CONFIG.QR_REMOTE_URL;
 
 let qrVisible = false;
 
